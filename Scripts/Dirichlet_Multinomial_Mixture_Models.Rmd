@@ -1,0 +1,303 @@
+---
+title: "Dirichlet Multinomial Mixture Models"
+date: "December 2022"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+  github_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r Load packages 1, echo=TRUE, message=FALSE}
+library( dplyr )
+library( magrittr )
+library( knitr )
+library( tidyverse )
+library( reshape2 )
+```
+
+```{r Load packages 2, echo=TRUE, message=FALSE, warning=FALSE}
+library( phyloseq )
+library( microbiome )
+library( DirichletMultinomial )
+library( microViz )
+library( ggalluvial )
+```
+
+## Load the data
+
+Here we use the compositional count abundance dataset, because of the requirements of the Dirichlet multinomial mixed model.
+
+```{r Load Data, echo=FALSE}
+physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_countdata.rds" ) 
+```
+
+## Preprocessing of the data
+
+```{r Phyloseq object, echo=TRUE}
+# Aggregate to family level
+physeq_mOTU = aggregate_taxa( physeq_mOTU, "family" )
+physeq_mOTU
+
+# Store information in a dataframe
+df = abundances( physeq_mOTU )
+df.count = as.matrix( t( df ))
+```
+
+## Cluster 1000 times
+
+Note that this function takes a long time to run.
+
+```{r Repeat 1000 times, eval=FALSE}
+all_clusters_1000 = list() # save all clusters
+output_vector_1000 = list() # save best number of clusters
+for ( i in ( 1:1000 )) {
+  set.seed( i )
+  all_clusters_one = lapply( 1:10, dmn, count = df.count, verbose = FALSE )
+  all_clusters_1000[[ i ]] = all_clusters_one
+  laplace.met = base::sapply( all_clusters_one, DirichletMultinomial::laplace )
+  output_vector_1000[[ i ]] = all_clusters_one[[ which.min(unlist( laplace.met ))]]
+}
+```
+
+## Save results
+
+```{r Save, eval=FALSE}
+saveRDS( all_clusters_1000, "all_clusters_1000.rds" )
+saveRDS( output_vector_1000, "output_vector_1000.rds" )
+```
+
+```{r Load 1000 Results, echo=FALSE}
+all_clusters.donors <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/all_clusters_1000_donors.rds" )
+output_vector.donors <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/output_vector_1000_donors.rds" )
+```
+
+## Evaluate clusters
+
+```{r Number of clusters, echo=TRUE}
+clus_2 = numeric()
+clus_3 = numeric()
+clus_4 = numeric()
+clus_5 = numeric()
+clus_6 = numeric()
+clus_7 = numeric()
+
+for ( i in 1:1000 ) {
+  if ( length(output_vector.donors[[ i ]]@mixture$Weight ) == 2 ) {
+    clus_2[ i ] = output_vector.donors[[ i ]]@goodnessOfFit[ "Laplace" ]
+  }
+  else if ( length( output_vector.donors[[ i ]]@mixture$Weight ) == 3 ) {
+    clus_3[ i ] = output_vector.donors[[ i ]]@goodnessOfFit[ "Laplace" ]
+  }
+  else if ( length( output_vector.donors[[ i ]]@mixture$Weight ) == 4 ) {
+    clus_4[ i ] = output_vector.donors[[ i ]]@goodnessOfFit[ "Laplace" ]
+  }
+  else if ( length( output_vector.donors[[ i ]]@mixture$Weight ) == 5 ) {
+    clus_5[ i ] = output_vector.donors[[ i ]]@goodnessOfFit[ "Laplace" ]
+  }
+  else if ( length( output_vector.donors[[ i ]]@mixture$Weight ) == 6 ) {
+    clus_6[ i ] = output_vector.donors[[ i ]]@goodnessOfFit[ "Laplace" ]
+  }
+  else if ( length( output_vector.donors[[ i ]]@mixture$Weight ) == 7 ) {
+    clus_7[ i ] = output_vector.donors[[ i ]]@goodnessOfFit[ "Laplace" ]
+  }
+}
+
+length( na.omit( clus_2 )) # 0
+length( na.omit( clus_3 )) # 0
+length( na.omit( clus_4 )) # 161
+length( na.omit( clus_5 )) # 39
+length( na.omit( clus_6 )) # 21 
+length( na.omit( clus_7 )) # 779
+
+# AICs
+min( clus_4, na.rm = TRUE ) # 23899.43
+min( clus_5, na.rm = TRUE ) # 23788.53
+which.min( clus_5 ) # model 479
+
+min( clus_6, na.rm = TRUE ) # 23813.3
+min( clus_7, na.rm = TRUE ) # 23883.82
+```
+
+## Model with lowest AIC
+
+```{r cluster 479, echo=TRUE}
+output.479 = output_vector.donors[[ 479 ]]
+sample.479 = apply( mixture( output.479 ), 1, which.max )
+```
+
+## Bacterial importance
+
+```{r}
+# importance of bacteria in each cluster based on comparisons with 1 cluster
+p0 = fitted( all_clusters.donors[[ 479 ]][[ 1 ]], scale = TRUE ) # scale by theta -- with only 1 cluster
+# fitted function describes the contribution of each taxonomic group
+p4 = fitted( output.479, scale = TRUE ) # three clusters
+colnames( p4 ) = paste( "m", 1:5, sep="" )
+meandiff = colSums( abs( p4 - as.vector( p0 )))
+# The posterior mean difference between the best and single-component Dirichlet multinomial model measures how each component differs from the population average;
+
+# sum( meandiff )
+
+diff = rowSums( abs( p4 - as.vector( p0 ))) # fitted values of taxa from cluster 3 - cluster 1 to get difference
+o = order( diff, decreasing = TRUE ) # order the taxa based on their difference from highest to lowest
+
+cdiff = cumsum( diff[ o ]) / sum( diff )
+df = head( cbind( mean = p0[ o ], p4[ o, ], diff = diff[ o ], cdiff ), 10 ) # get the taxa corresponding to order for each cluster (m1, m2, m3)
+df
+```
+## Plot bacterial importance
+
+```{r Plot importance, echo=TRUE}
+for ( k in seq( ncol( fitted( output.479 )))) {
+  d = melt( fitted( output.479 ))
+  colnames( d ) = c( "OTU", "cluster", "value" )
+  d = subset( d, cluster == k ) %>%
+    arrange( value ) %>%
+    mutate( OTU = factor( OTU, levels = unique( OTU ))) %>%
+    filter( abs( value ) > quantile( abs( value ), 0.8 ))
+  
+  p = ggplot( d, aes( x = OTU, y = value )) +
+    geom_bar( stat = "identity" ) +
+    coord_flip()
+  print( p )
+}
+
+# cluster 1 - green
+# cluster 2 - blue
+# cluster 3 - red
+# cluster 5 - purple (like cluster 4 in other results)
+
+# cluster 4 -- donors
+```
+## Plot clusters per patient and per timepoint
+
+```{r Preprocessing per sample, echo=TRUE}
+physeq_mOTU.patients = subset_samples(physeq_mOTU, subject_id != "Donor A" )
+physeq_mOTU.patients = subset_samples(physeq_mOTU.patients, subject_id != "Donor B" )
+```
+
+```{r Get clusters, echo=TRUE}
+sample.479.nodonors = sample.479[ -c( 181:207 )]
+
+physeq_mOTU.patients@sam_data$cluster = sample.479.nodonors
+physeq_mOTU.patients@sam_data$cluster = as.factor( physeq_mOTU.patients@sam_data$cluster )
+```
+
+```{r Adjust the data, echo=TRUE}
+physeq.comp = microbiome::transform( physeq_mOTU.patients, "compositional" )
+df.fam = abundances( physeq.comp )
+df.fam = t( df.fam )
+df.fam = as.data.frame( df.fam )
+
+df.count = abundances( physeq_mOTU.patients )
+df.count = t( df.count )
+df.count = as.data.frame( df.count )
+
+# Combine abundances and sample data
+df.all = data.frame( df.fam, physeq_mOTU.patients@sam_data )
+df.all$timepoint.new = as.factor( df.all$timepoint.new )
+df.all$treated_with_donor = as.factor( df.all$treated_with_donor )
+df.all$pretreatment = as.factor( df.all$pretreatment )
+df.all$clinical_outcome_wk14 = as.factor( df.all$clinical_outcome_wk14 )
+df.all$cluster = as.factor( df.all$cluster )
+
+df.all$timepoint.new = factor( df.all$timepoint.new,
+levels = c( "Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14" ))
+
+df.all.count = data.frame( df.count, physeq_mOTU.patients@sam_data ) 
+
+# Select patient ID, time, cluster and clinical outcome
+df.sub = df.all %>% select( subject_id, timepoint.new, cluster, clinical_outcome_wk14 )
+
+df.sub$cluster = as.factor( df.sub$cluster )
+df.sub$timepoint.new = factor( df.sub$timepoint.new, levels = c( "Baseline", "Pre-FMT", "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14" ))
+df.sub$clinical_outcome_wk14 = recode_factor( df.sub$clinical_outcome_wk14, None = "Non-Responder", Good = "Responder" )
+```
+
+```{r Make the plot, echo=TRUE}
+# cluster 1 - green
+# cluster 2 - blue
+# cluster 3 - red
+# cluster 5 - purple (like cluster 4 in other results)
+
+# cluster 4 -- donors
+colors = c( "#82E0AA", "#85C1E9", "#EC7063", "#7B3F00", "#BD86EB" )
+
+ggplot( df.sub, aes( x = timepoint.new, y = subject_id, fill = cluster )) + xlab( "Timepoint" ) +
+       geom_tile( color = "grey20" ) + ylab( "Subject ID" ) + labs( fill = "Cluster" ) +
+  facet_grid( clinical_outcome_wk14 ~ ., space = "free_y", scales = "free_y" ) +
+  theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank()) + scale_fill_manual( values = colors )
+
+# subject 105 and 121 were both from Donor A
+```
+
+```{r Visualize clusters per clinical response, echo=TRUE}
+# clinical response
+df.bar.resp = df.all %>% group_by( cluster ) %>% count( clinical_outcome_wk14 ) %>% mutate( freq = n / sum( n ))
+
+df.bar.resp$cluster = as.factor( df.bar.resp$cluster )
+
+df.bar.resp
+
+colors = c( "#82E0AA", "#85C1E9", "#EC7063", "#7B3F00", "#BD86EB" )
+
+ggplot( df.bar.resp, aes( fill = cluster, y = n, x = clinical_outcome_wk14 )) + geom_bar( position = "fill", stat = "identity", width = 0.7 ) + ylab( "Percentage (%)" ) + theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank()) + theme( axis.title.x = element_blank()) + labs( fill = "Cluster" ) + scale_fill_manual( values = colors ) + theme( aspect.ratio = 2/1 )
+```
+
+## PCA plot clusters
+
+```{r PCA, echo=TRUE}
+pca.1.2 = physeq_mOTU.patients %>% tax_transform( "clr", rank = "unique" ) %>% # best graph
+  ord_calc( method = "PCA" ) %>%
+  ord_plot(
+    axes = c( 1, 2 ), 
+    color = "cluster", fill = "cluster", shape = "clinical_outcome_wk14", plot_taxa = c( "Prevotellaceae", "Ruminococcaceae", "Lachnospiraceae", "Clostridialesfam.incertaesedis" ), size = 2
+  ) + scale_color_manual(values = c( "#82E0AA", "#85C1E9", "#EC7063", "#7B3F00", "#BD86EB" )) +
+  # scale_shape_manual(values = c(
+    # Baseline = "circle", FMT1 = "circle cross", FMT2 = "circle open", FMT3 = "square", FMT4 = "square cross", Week7 = "square open",
+    # Week8 = "triangle", Week10 = "triangle open", Week14 = "diamond" )) +
+  # ggplot2::stat_ellipse(
+    # ggplot2::aes( colour = clinical_outcome_wk14 )
+  #) +
+  ggtitle( # title
+    label = "PCA Based on Aitchison Distance",
+  ) +
+  labs( caption = "180 samples, 93 taxa" ) # caption at bottom
+
+pca.1.2
+```
+
+## PCA plot with donors
+
+
+## Alluvial plot clustering
+```{r Alluvial, echo=TRUE}
+physeq_mOTU.patients@sam_data$cluster = as.factor( physeq_mOTU.patients@sam_data$cluster )
+physeq_mOTU.patients@sam_data$timepoint.new = factor( physeq_mOTU.patients@sam_data$timepoint.new, levels = c( "Baseline", "Pre-FMT", "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14" ))
+
+two_colors = c( "#82E0AA", "#EC7063" )
+
+pl1 = ggplot( physeq_mOTU.patients@sam_data,
+       aes( x = timepoint.new, stratum = cluster, alluvium = subject_id,
+           fill = clinical_outcome_wk14, label = clinical_outcome_wk14 )) +
+  ylab( "Number of Patients" ) +
+  scale_fill_manual( values = two_colors ) +
+  geom_flow( stat = "alluvium" ) +
+  geom_stratum( color = "white" ) +
+  geom_text( stat = "stratum", aes( label = after_stat( stratum )))
+
+pl2 = pl1 + theme( axis.title.x = element_blank(),  panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank()) + guides( fill = guide_legend( title = "Response" ))
+
+pl2
+```
