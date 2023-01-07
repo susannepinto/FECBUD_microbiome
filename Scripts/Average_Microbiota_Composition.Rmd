@@ -2,10 +2,10 @@
 title: "Average Microbiota Compostition"
 date: "December 2022"
 output:
-  html_document: default
+  github_document: default
   word_document: default
   pdf_document: default
-  github_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -36,7 +36,7 @@ library( patchwork )
 Here we use the relative abundance dataset.
 
 ```{r Load Data, echo=FALSE}
-physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_relativeabundances.rds" ) 
+physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/FECBUD_microbiome/Data/FECBUD_physeq_filt_relativeabundances.rds" ) 
 ```
 
 ## Preprocessing of the data

@@ -2,10 +2,10 @@
 title: "Dirichlet Multinomial Mixture Models"
 date: "December 2022"
 output:
-  html_document: default
+  github_document: default
   word_document: default
   pdf_document: default
-  github_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -35,7 +35,7 @@ library( ggalluvial )
 Here we use the compositional count abundance dataset, because of the requirements of the Dirichlet multinomial mixed model.
 
 ```{r Load Data, echo=FALSE}
-physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_countdata.rds" ) 
+physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/FECBUD_microbiome/Data/FECBUD_physeq_filt_countdata.rds" ) 
 ```
 
 ## Preprocessing of the data
@@ -74,8 +74,8 @@ saveRDS( output_vector_1000, "output_vector_1000.rds" )
 ```
 
 ```{r Load 1000 Results, echo=FALSE}
-all_clusters.donors <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/all_clusters_1000_donors.rds" )
-output_vector.donors <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/output_vector_1000_donors.rds" )
+all_clusters.donors <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/FECBUD_microbiome/Data/all_clusters_1000_donors.rds" )
+output_vector.donors <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/FECBUD_microbiome/Data/output_vector_1000_donors.rds" )
 ```
 
 ## Evaluate clusters

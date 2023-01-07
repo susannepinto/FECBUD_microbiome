@@ -2,10 +2,10 @@
 title: "Top 10 families Mixed models"
 date: "December 2022"
 output:
-  html_document: default
+  github_document: default
   word_document: default
   pdf_document: default
-  github_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -51,7 +51,7 @@ library( tibble )
 Here we use the compositional count abundance dataset, else problems with convergence occur.
 
 ```{r Load Data, echo=FALSE}
-physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_countdata.rds" ) 
+physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/FECBUD_microbiome/Data/FECBUD_physeq_filt_countdata.rds" ) 
 ```
 
 ## Preprocessing of the data
