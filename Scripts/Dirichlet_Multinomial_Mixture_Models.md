@@ -342,7 +342,7 @@ panel.background = element_blank()) + theme( axis.title.x = element_blank()) + l
 
 ![](Dirichlet_Multinomial_Mixture_Models_files/figure-gfm/Visualize%20clusters%20per%20clinical%20response-1.png)<!-- -->
 
-## PCA plot clusters
+## PCA plot clusters of patients
 
 ``` r
 pca.1.2 = physeq_mOTU.patients %>% tax_transform( "clr", rank = "unique" ) %>% # best graph
@@ -368,6 +368,35 @@ pca.1.2
 ![](Dirichlet_Multinomial_Mixture_Models_files/figure-gfm/PCA-1.png)<!-- -->
 
 ## PCA plot with donors
+
+``` r
+physeq_mOTU@sam_data$cluster = sample.479
+physeq_mOTU@sam_data$cluster = as.factor(physeq_mOTU@sam_data$cluster)
+
+physeq_mOTU@sam_data$type = c(rep("Subject", 180), rep("Donor A", 13), rep("Donor B", 14))
+physeq_mOTU@sam_data$type = as.factor( physeq_mOTU@sam_data$type)
+
+pca.1.3 = physeq_mOTU %>% tax_transform("clr", rank = "unique") %>% # best graph
+  ord_calc(method = "PCA") %>%
+  ord_plot(
+    axes = c(1, 2), 
+    color = "cluster", fill = "cluster", shape = "type", plot_taxa = c("Prevotellaceae", "Ruminococcaceae", "Lachnospiraceae", "Clostridialesfam.incertaesedis"), size = 2
+  ) + scale_color_manual(values = c("#82E0AA", "#85C1E9", "#EC7063", "#7B3F00", "#BD86EB")) +
+  #scale_shape_manual(values = c(
+    #Baseline = "circle", FMT1 = "circle cross", FMT2 = "circle open", FMT3 = "square", FMT4 = "square cross", Week7 = "square open",
+    #Week8 = "triangle", Week10 = "triangle open", Week14 = "diamond")) +
+  #ggplot2::stat_ellipse(
+    #ggplot2::aes(colour = clinical_outcome_wk14)
+  #) +
+  ggtitle( # title
+    label = "PCA Based on Aitchison Distance",
+  ) +
+  labs(caption = "180 samples, 93 taxa") # caption at bottom
+
+pca.1.3
+```
+
+![](Dirichlet_Multinomial_Mixture_Models_files/figure-gfm/PCA%20donors-1.png)<!-- -->
 
 ## Alluvial plot clustering
 
