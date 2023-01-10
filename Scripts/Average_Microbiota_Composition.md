@@ -41,15 +41,10 @@ physeq_mOTU.rel
     ## sample_data() Sample Data:       [ 207 samples by 17 sample variables ]
     ## tax_table()   Taxonomy Table:    [ 95 taxa by 6 taxonomic ranks ]
 
-``` r
-# Remove donors
-physeq_mOTU.rel = subset_samples( physeq_mOTU.rel, subject_id != "Donor A" )
-physeq_mOTU.rel = subset_samples( physeq_mOTU.rel, subject_id != "Donor B" )
-```
+## Subset data and select core patient micorbiota
 
 ``` r
 temp <- aggregate_top_taxa2( physeq_mOTU.rel, 15, "family" )
-# temp = microbiome::merge_taxa2( temp, taxa = c( "Unknown", "Other" ), name = "Other" )
 temp@otu_table %>% rownames()
 ```
 
@@ -60,7 +55,7 @@ temp@otu_table %>% rownames()
     ##  [9] "Lachnospiraceae"                "Oscillospiraceae"              
     ## [11] "Other"                          "Prevotellaceae"                
     ## [13] "Rikenellaceae"                  "Ruminococcaceae"               
-    ## [15] "Streptococcaceae"               "Sutterellaceae"
+    ## [15] "Sutterellaceae"                 "Veillonellaceae"
 
 ``` r
 temp@otu_table <- temp@otu_table[ c( 1:10, 12:16, 11 ), ]
@@ -68,11 +63,17 @@ temp
 ```
 
     ## phyloseq-class experiment-level object
-    ## otu_table()   OTU Table:         [ 16 taxa and 180 samples ]
-    ## sample_data() Sample Data:       [ 180 samples by 17 sample variables ]
+    ## otu_table()   OTU Table:         [ 16 taxa and 207 samples ]
+    ## sample_data() Sample Data:       [ 207 samples by 17 sample variables ]
     ## tax_table()   Taxonomy Table:    [ 16 taxa by 2 taxonomic ranks ]
 
 ``` r
+temp.donorA = temp %>%
+  ps_filter( subject_id == "Donor A"  )
+
+temp.donorB = temp %>%
+  ps_filter( subject_id == "Donor B"  )
+
 temp.base = temp %>%
   ps_select( clinical_outcome_wk14, timepoint ) %>%
   ps_filter( timepoint == "Baseline" )
@@ -116,7 +117,7 @@ mycolors <- colorRampPalette( brewer.pal( 8, "Set1" ))( 16 )
 ```
 
 ``` r
-p1 = plot_composition( temp.base, average_by = "clinical_outcome_wk14" ) +
+pdonorA = plot_composition( temp.donorA, average_by = "treated_with_donor" ) +
   theme( legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         # axis.text = element_text( size = 8 ),
         # axis.title.x = element_text( size = 8 ),
@@ -124,7 +125,41 @@ p1 = plot_composition( temp.base, average_by = "clinical_outcome_wk14" ) +
     panel.grid.minor = element_blank(),
     panel.background = element_blank(),
     axis.ticks = element_blank()) + 
-  labs(x = "Baseline", y = "Relative Abundance" ) + 
+  labs( x = "Average", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "Donor A" )) + 
+  ylim( 0, 1.0 )
+
+pdonorB = plot_composition( temp.donorB, average_by = "treated_with_donor" ) +
+  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_line( "white" ),
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Average", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "Donor B" )) + 
+  ylim( 0, 1.0 )
+
+p1 = plot_composition( temp.base, average_by = "clinical_outcome_wk14" ) +
+  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_line( "white" ),
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Baseline", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) + 
   scale_x_discrete( labels = c( "NR", "R" )) + 
   ylim( 0, 1.0 )
@@ -259,6 +294,7 @@ p9 = plot_composition( temp.wk14, average_by = "clinical_outcome_wk14" ) +
         # legend.key.height = unit( 0.5, "cm" ), 
         # legend.key.width = unit( 0.5, "cm" ),
          panel.grid.major = element_blank(),
+          legend.position = "right",
     panel.grid.minor = element_blank(),
     panel.background = element_blank(),
     axis.ticks = element_blank()) + 
@@ -269,7 +305,7 @@ p9 = plot_composition( temp.wk14, average_by = "clinical_outcome_wk14" ) +
 ```
 
 ``` r
-plot.compositions = p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + plot_layout( nrow = 1 )
+plot.compositions = (pdonorA + pdonorB + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9) + plot_layout( nrow = 1 ) 
 plot.compositions
 ```
 
