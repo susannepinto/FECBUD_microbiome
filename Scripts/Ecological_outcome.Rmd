@@ -811,8 +811,13 @@ model.eco <- glmer.nb( n ~ ns( time2, df = 3 )  * outcome + State * outcome + Do
 summary( model.eco )
 plot_summs( model.eco )
 
-wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 10, 30, 31, 32, 33, 34 )) # State
-wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 5, 6, 7, 8, 9, 15:34 )) # Outcome
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 5, 6, 7, 8, 9, 15:34 )) # ecological Outcome
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 10, 30, 31, 32, 33, 34 )) # Clinical state 
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 14 )) # Sex
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 13 )) # Age
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 12 )) # Pretreatment
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 11 )) # Donor
+
 ```
 
 ## Plot ecological outcomes per timepoint per disease state
