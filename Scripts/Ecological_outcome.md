@@ -769,14 +769,14 @@ resultscounts <- list()
 for(i in 1:length( listofresults )){
   resultscounts[[i]] <- listofresults[[i]] %>% 
     pivot_longer(cols = c(Pre_FMT, Post_1, Post_2, Post_3,
-                          Post_4, Week8, Week10, Week14), names_to = "timepoint", values_to = "outcome") %>% 
+                          Post_4, Week8, Week10, Week14), names_to = "timepoint", values_to = "index") %>% 
     group_by(timepoint) %>% 
-    mutate(outcome = factor(outcome, levels = c("Rejection", "Species loss",
+    mutate(index = factor(index, levels = c("Rejection", "Species loss",
                                                 "Novel", "Colonisation", "Transient", "Persistence",  
                                                 "Absent" ))) %>% 
-    filter(outcome != "Absent") %>%
-    summarise(n = c((table(outcome)))) %>% 
-    mutate(outcome = c("Rejection", "Species loss",
+    filter(index != "Absent") %>%
+    summarise(n = c((table(index)))) %>% 
+    mutate(index = c("Rejection", "Species loss",
                        "Novel", "Colonisation", "Transient", "Persistence",  
                        "Absent")) 
   
@@ -784,7 +784,7 @@ for(i in 1:length( listofresults )){
                                                         "Post_4", "Week8", "Week10", "Week14" ))
   resultscounts[[ i ]]$patient.characteristics <- listofresults[[i]]$patient.characteristics %>% unique()
   resultscounts[[ i ]][c('Patient_ID', 'State', 'Donor', 'Pretreatment', 'Age', 'Sex')] <- str_split_fixed(resultscounts[[ i ]]$patient.characteristics, ' - ', 6)
-  resultscounts[[ i ]] <- resultscounts[[ i ]][c('Patient_ID', 'State', 'Donor', 'Pretreatment', 'Age', 'Sex' ,'timepoint', 'outcome', 'n')]
+  resultscounts[[ i ]] <- resultscounts[[ i ]][c('Patient_ID', 'State', 'Donor', 'Pretreatment', 'Age', 'Sex' ,'timepoint', 'index', 'n')]
 }
 ```
 
@@ -813,7 +813,7 @@ head( results.all.count )
 
     ## # A tibble: 6 × 9
     ## # Groups:   timepoint [1]
-    ##   Patient_ID State Donor   Pretreatment Age   Sex   timepoint outcome          n
+    ##   Patient_ID State Donor   Pretreatment Age   Sex   timepoint index            n
     ##   <chr>      <chr> <chr>   <chr>        <chr> <chr> <fct>     <chr>        <int>
     ## 1 101        Good  Donor A placebo      58    F     Post_1    Rejection       24
     ## 2 101        Good  Donor A placebo      58    F     Post_1    Species loss   123
@@ -842,7 +842,7 @@ results.all.count$timepoint %>% unique()
     ## Levels: Pre_FMT Post_1 Post_2 Post_3 Post_4 Week8 Week10 Week14
 
 ``` r
-results.all.count$outcome %>% unique()
+results.all.count$index %>% unique()
 ```
 
     ## [1] "Rejection"    "Species loss" "Novel"        "Colonisation" "Transient"   
@@ -852,10 +852,10 @@ results.all.count$outcome %>% unique()
 
 ``` r
 # Remove category 'Absent', because always 9
-results.all.count <- results.all.count  %>% filter( outcome != "Absent" )
+results.all.count <- results.all.count  %>% filter( index != "Absent" )
 
 # Remove information in Pre-FMT transient category (because always 0)
-results.all.count$n[ results.all.count$timepoint == "Pre_FMT"&results.all.count$outcome == "Transient" ] <- NA
+results.all.count$n[ results.all.count$timepoint == "Pre_FMT"&results.all.count$index == "Transient" ] <- NA
 
 # make time categorical (translate to weeks)
 results.all.count$time <- 0
@@ -880,7 +880,7 @@ results.all.count$Age2 <- results.all.count$Age / 10
 
 ``` r
 # with 3 splines
-model.eco <- glmer.nb( n ~ ns( time2, df = 3 )  * outcome + State * outcome + Donor + Pretreatment + Age2 + Sex + ( 1 | Patient_ID ), 
+model.eco <- glmer.nb( n ~ ns( time2, df = 3 )  * index + State * index + Donor + Pretreatment + Age2 + Sex + ( 1 | Patient_ID ), 
                         data = results.all.count[ results.all.count$Patient_ID != "109" & 
                                                  results.all.count$Patient_ID != "117", ])
 summary( model.eco )
@@ -890,7 +890,7 @@ summary( model.eco )
     ##   Approximation) [glmerMod]
     ##  Family: Negative Binomial(2.8665)  ( log )
     ## Formula: 
-    ## n ~ ns(time2, df = 3) * outcome + State * outcome + Donor + Pretreatment +  
+    ## n ~ ns(time2, df = 3) * index + State * index + Donor + Pretreatment +  
     ##     Age2 + Sex + (1 | Patient_ID)
     ##    Data: 
     ## results.all.count[results.all.count$Patient_ID != "109" & results.all.count$Patient_ID !=  
@@ -909,41 +909,41 @@ summary( model.eco )
     ## Number of obs: 903, groups:  Patient_ID, 22
     ## 
     ## Fixed effects:
-    ##                                        Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                             1.93585    0.21325   9.078  < 2e-16 ***
-    ## ns(time2, df = 3)1                      0.10926    0.24001   0.455 0.648947    
-    ## ns(time2, df = 3)2                      1.61324    0.31656   5.096 3.46e-07 ***
-    ## ns(time2, df = 3)3                      0.42996    0.17292   2.487 0.012900 *  
-    ## outcomeNovel                            1.85525    0.20966   8.849  < 2e-16 ***
-    ## outcomePersistence                      2.73841    0.20635  13.271  < 2e-16 ***
-    ## outcomeRejection                        2.01738    0.20954   9.628  < 2e-16 ***
-    ## outcomeSpecies loss                     1.97985    0.20983   9.435  < 2e-16 ***
-    ## outcomeTransient                        2.21955    0.37275   5.955 2.61e-09 ***
-    ## StateNone                               0.51940    0.13715   3.787 0.000152 ***
-    ## DonorDonor B                           -0.07695    0.08642  -0.890 0.373224    
-    ## Pretreatmentplacebo                    -0.05369    0.08367  -0.642 0.521016    
-    ## Age2                                    0.02085    0.02519   0.828 0.407756    
-    ## SexM                                   -0.26049    0.08425  -3.092 0.001989 ** 
-    ## ns(time2, df = 3)1:outcomeNovel        -0.61663    0.34149  -1.806 0.070967 .  
-    ## ns(time2, df = 3)2:outcomeNovel        -3.32706    0.41651  -7.988 1.37e-15 ***
-    ## ns(time2, df = 3)3:outcomeNovel        -1.11399    0.24434  -4.559 5.14e-06 ***
-    ## ns(time2, df = 3)1:outcomePersistence   0.37201    0.32979   1.128 0.259304    
-    ## ns(time2, df = 3)2:outcomePersistence  -0.91873    0.41333  -2.223 0.026231 *  
-    ## ns(time2, df = 3)3:outcomePersistence  -0.02836    0.23233  -0.122 0.902832    
-    ## ns(time2, df = 3)1:outcomeRejection    -0.57204    0.33770  -1.694 0.090277 .  
-    ## ns(time2, df = 3)2:outcomeRejection    -3.03817    0.41583  -7.306 2.75e-13 ***
-    ## ns(time2, df = 3)3:outcomeRejection    -1.16000    0.24108  -4.812 1.50e-06 ***
-    ## ns(time2, df = 3)1:outcomeSpecies loss  0.52303    0.32821   1.594 0.111029    
-    ## ns(time2, df = 3)2:outcomeSpecies loss  0.49850    0.42600   1.170 0.241928    
-    ## ns(time2, df = 3)3:outcomeSpecies loss  0.46222    0.23568   1.961 0.049856 *  
-    ## ns(time2, df = 3)1:outcomeTransient    -2.11181    0.37585  -5.619 1.92e-08 ***
-    ## ns(time2, df = 3)2:outcomeTransient    -5.39242    0.76161  -7.080 1.44e-12 ***
-    ## ns(time2, df = 3)3:outcomeTransient    -3.03605    0.31955  -9.501  < 2e-16 ***
-    ## outcomeNovel:StateNone                 -0.51858    0.15108  -3.433 0.000598 ***
-    ## outcomePersistence:StateNone           -0.71716    0.14698  -4.879 1.06e-06 ***
-    ## outcomeRejection:StateNone             -0.29007    0.15033  -1.930 0.053656 .  
-    ## outcomeSpecies loss:StateNone          -0.47811    0.14572  -3.281 0.001034 ** 
-    ## outcomeTransient:StateNone             -0.81657    0.16522  -4.942 7.72e-07 ***
+    ##                                      Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)                           1.93585    0.21325   9.078  < 2e-16 ***
+    ## ns(time2, df = 3)1                    0.10926    0.24001   0.455 0.648947    
+    ## ns(time2, df = 3)2                    1.61324    0.31656   5.096 3.46e-07 ***
+    ## ns(time2, df = 3)3                    0.42996    0.17292   2.487 0.012900 *  
+    ## indexNovel                            1.85525    0.20966   8.849  < 2e-16 ***
+    ## indexPersistence                      2.73841    0.20635  13.271  < 2e-16 ***
+    ## indexRejection                        2.01738    0.20954   9.628  < 2e-16 ***
+    ## indexSpecies loss                     1.97985    0.20983   9.435  < 2e-16 ***
+    ## indexTransient                        2.21955    0.37275   5.955 2.61e-09 ***
+    ## StateNone                             0.51940    0.13715   3.787 0.000152 ***
+    ## DonorDonor B                         -0.07695    0.08642  -0.890 0.373224    
+    ## Pretreatmentplacebo                  -0.05369    0.08367  -0.642 0.521016    
+    ## Age2                                  0.02085    0.02519   0.828 0.407756    
+    ## SexM                                 -0.26049    0.08425  -3.092 0.001989 ** 
+    ## ns(time2, df = 3)1:indexNovel        -0.61663    0.34149  -1.806 0.070967 .  
+    ## ns(time2, df = 3)2:indexNovel        -3.32706    0.41651  -7.988 1.37e-15 ***
+    ## ns(time2, df = 3)3:indexNovel        -1.11399    0.24434  -4.559 5.14e-06 ***
+    ## ns(time2, df = 3)1:indexPersistence   0.37201    0.32979   1.128 0.259304    
+    ## ns(time2, df = 3)2:indexPersistence  -0.91873    0.41333  -2.223 0.026231 *  
+    ## ns(time2, df = 3)3:indexPersistence  -0.02836    0.23233  -0.122 0.902832    
+    ## ns(time2, df = 3)1:indexRejection    -0.57204    0.33770  -1.694 0.090277 .  
+    ## ns(time2, df = 3)2:indexRejection    -3.03817    0.41583  -7.306 2.75e-13 ***
+    ## ns(time2, df = 3)3:indexRejection    -1.16000    0.24108  -4.812 1.50e-06 ***
+    ## ns(time2, df = 3)1:indexSpecies loss  0.52303    0.32821   1.594 0.111029    
+    ## ns(time2, df = 3)2:indexSpecies loss  0.49850    0.42600   1.170 0.241928    
+    ## ns(time2, df = 3)3:indexSpecies loss  0.46222    0.23568   1.961 0.049856 *  
+    ## ns(time2, df = 3)1:indexTransient    -2.11181    0.37585  -5.619 1.92e-08 ***
+    ## ns(time2, df = 3)2:indexTransient    -5.39242    0.76161  -7.080 1.44e-12 ***
+    ## ns(time2, df = 3)3:indexTransient    -3.03605    0.31955  -9.501  < 2e-16 ***
+    ## indexNovel:StateNone                 -0.51858    0.15108  -3.433 0.000598 ***
+    ## indexPersistence:StateNone           -0.71716    0.14698  -4.879 1.06e-06 ***
+    ## indexRejection:StateNone             -0.29007    0.15033  -1.930 0.053656 .  
+    ## indexSpecies loss:StateNone          -0.47811    0.14572  -3.281 0.001034 ** 
+    ## indexTransient:StateNone             -0.81657    0.16522  -4.942 7.72e-07 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -953,7 +953,15 @@ summary( model.eco )
     ##     vcov(x)        if you need it
 
 ``` r
-plot_summs( model.eco )
+plot_summs( model.eco ) +
+theme( panel.grid.major = element_line(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(),
+    text = element_text( family = 'Helvetica' ),
+    legend.title = element_blank(), 
+    axis.text = element_text( size = 25 ),
+    axis.title = element_text( size = 15 ))
 ```
 
     ## Loading required namespace: broom.mixed
@@ -961,7 +969,17 @@ plot_summs( model.eco )
 ![](Ecological_outcome_files/figure-gfm/Modelling-1.png)<!-- -->
 
 ``` r
-wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 10, 30, 31, 32, 33, 34 )) # State
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 5, 6, 7, 8, 9, 15:34 )) # ecological index
+```
+
+    ## Wald test:
+    ## ----------
+    ## 
+    ## Chi-squared test:
+    ## X2 = 2283.2, df = 25, P(> X2) = 0.0
+
+``` r
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 10, 30, 31, 32, 33, 34 )) # Clinical state 
 ```
 
     ## Wald test:
@@ -971,25 +989,60 @@ wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 10, 30,
     ## X2 = 35.9, df = 6, P(> X2) = 2.9e-06
 
 ``` r
-wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 5, 6, 7, 8, 9, 15:34 )) # Outcome
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 14 )) # Sex
 ```
 
     ## Wald test:
     ## ----------
     ## 
     ## Chi-squared test:
-    ## X2 = 2283.2, df = 25, P(> X2) = 0.0
+    ## X2 = 9.6, df = 1, P(> X2) = 0.002
+
+``` r
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 13 )) # Age
+```
+
+    ## Wald test:
+    ## ----------
+    ## 
+    ## Chi-squared test:
+    ## X2 = 0.69, df = 1, P(> X2) = 0.41
+
+``` r
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 12 )) # Pretreatment
+```
+
+    ## Wald test:
+    ## ----------
+    ## 
+    ## Chi-squared test:
+    ## X2 = 0.41, df = 1, P(> X2) = 0.52
+
+``` r
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 11 )) # Donor
+```
+
+    ## Wald test:
+    ## ----------
+    ## 
+    ## Chi-squared test:
+    ## X2 = 0.79, df = 1, P(> X2) = 0.37
 
 ## Plot ecological outcomes per timepoint per disease state
 
 ``` r
+State.labs <- c( "Responders", "Non Responders")
+names( State.labs ) <- c( "Good", "None" )
+
 ggplot( results.all.count,
-        aes( x = timepoint, y = n, col = outcome )) + 
+        aes( x = timepoint, y = n, col = index )) + 
   geom_jitter() + 
   theme_bw() +
   geom_boxplot( alpha=0.2 ) + 
-  facet_grid( State ~ outcome, scales = "free" ) +
-  theme( axis.text.x = element_text( angle = 45, hjust = 1 )) 
+  facet_grid( State ~ index, scales = "free",
+              labeller = labeller(State = State.labs )) +
+  theme( text = element_text( size = 20 ),
+         axis.text.x = element_text( angle = 45, hjust = 1 )) 
 ```
 
 ![](Ecological_outcome_files/figure-gfm/Plot%20outcomes%20per%20state-1.png)<!-- -->
@@ -997,14 +1050,26 @@ ggplot( results.all.count,
 ## Plot ecological outcomes per timepoint per patient
 
 ``` r
-ggplot( data = results.all.count, aes( x = timepoint, y = n, color = outcome ))+
-  geom_point( size = 2 )+
-  facet_wrap( facets = ~ Patient_ID * State ) +
+State.labs <- c( "Responder", "Non Responder")
+names( State.labs ) <- c( "Good", "None" )
+
+ggplot( data = results.all.count, aes( x = timepoint, y = n, color = index )) +
+  geom_point( size = 2 ) +
+  geom_line( aes( group = index )) +
+  facet_wrap( facets =  State ~ Patient_ID  ,
+              labeller = labeller(State = State.labs ),
+              ncol = 9, nrow = 3) +
   scale_y_log10() +
   theme_bw() +
-  ggtitle( "Outcome per patient" ) +
+  ggtitle( "Indices per patient" ) +
   labs( x = "Timepoint", y = "n (log)" ) +
-  theme( axis.text.x = element_text( angle = 45, hjust = 1 )) 
+  theme( text = element_text( size = 20 ),
+         axis.text.x = element_text( angle = 90 )) 
 ```
+
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
 
 ![](Ecological_outcome_files/figure-gfm/Plot%20outcomes%20per%20patient-1.png)<!-- -->
