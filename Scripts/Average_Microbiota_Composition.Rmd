@@ -158,7 +158,8 @@ mycolors <- colorRampPalette( brewer.pal( 8, "Set1" ))( 16 )
 
 ```{r Average Plots per timepoint, echo=TRUE, message=FALSE, fig.width = 9}
 pdonorA = plot_composition( temp.donorA, average_by = "treated_with_donor" ) +
-  theme( legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         # axis.text = element_text( size = 8 ),
         # axis.title.x = element_text( size = 8 ),
         panel.grid.major = element_blank(),
@@ -170,7 +171,8 @@ pdonorA = plot_composition( temp.donorA, average_by = "treated_with_donor" ) +
   scale_x_discrete( labels = c( "Donor A" )) 
 
 pdonorB = plot_composition( temp.donorB, average_by = "treated_with_donor" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_line( "white" ),
@@ -186,7 +188,8 @@ pdonorB = plot_composition( temp.donorB, average_by = "treated_with_donor" ) +
   scale_x_discrete( labels = c( "Donor B" ))
 
 p1 = plot_composition( temp.base, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_line( "white" ),
@@ -202,7 +205,8 @@ p1 = plot_composition( temp.base, average_by = "clinical_outcome_wk14" ) +
   scale_x_discrete( labels = c( "NR", "R" )) 
 
 p2 = plot_composition( temp.fmt1, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_line( "white" ),
@@ -219,7 +223,8 @@ p2 = plot_composition( temp.fmt1, average_by = "clinical_outcome_wk14" ) +
 # + theme( aspect.ratio = 2/1 )
 
 p3 = plot_composition( temp.fmt2, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_blank(), 
@@ -236,7 +241,8 @@ p3 = plot_composition( temp.fmt2, average_by = "clinical_outcome_wk14" ) +
 # + theme(aspect.ratio = 2/1)
 
 p4 = plot_composition( temp.fmt3, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_blank(), 
@@ -253,7 +259,8 @@ p4 = plot_composition( temp.fmt3, average_by = "clinical_outcome_wk14" ) +
 # + theme( aspect.ratio = 2/1 ) 
 
 p5 = plot_composition( temp.fmt4, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_blank(),
@@ -270,7 +277,8 @@ p5 = plot_composition( temp.fmt4, average_by = "clinical_outcome_wk14" ) +
 # + theme( aspect.ratio = 2/1 )
 
 p6 = plot_composition( temp.wk7, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_blank(), 
@@ -287,7 +295,8 @@ p6 = plot_composition( temp.wk7, average_by = "clinical_outcome_wk14" ) +
 # + theme( aspect.ratio = 2/1 )
  
 p7 = plot_composition( temp.wk8, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x=element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x=element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_blank(), 
@@ -304,7 +313,8 @@ p7 = plot_composition( temp.wk8, average_by = "clinical_outcome_wk14" ) +
 # + theme( aspect.ratio = 2/1 )
 
 p8 = plot_composition( temp.wk10, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.ticks.y = element_blank(), 
@@ -321,7 +331,8 @@ p8 = plot_composition( temp.wk10, average_by = "clinical_outcome_wk14" ) +
 # + theme( aspect.ratio = 2/1 ) 
 
 p9 = plot_composition( temp.wk14, average_by = "clinical_outcome_wk14" ) +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         #legend.text = element_text( face = "italic" ),
         axis.title.y = element_blank(), 
         axis.text.y=element_blank(),
