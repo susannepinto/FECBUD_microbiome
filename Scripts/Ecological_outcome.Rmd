@@ -732,14 +732,14 @@ resultscounts <- list()
 for(i in 1:length( listofresults )){
   resultscounts[[i]] <- listofresults[[i]] %>% 
     pivot_longer(cols = c(Pre_FMT, Post_1, Post_2, Post_3,
-                          Post_4, Week8, Week10, Week14), names_to = "timepoint", values_to = "outcome") %>% 
+                          Post_4, Week8, Week10, Week14), names_to = "timepoint", values_to = "index") %>% 
     group_by(timepoint) %>% 
-    mutate(outcome = factor(outcome, levels = c("Rejection", "Species loss",
+    mutate(index = factor(index, levels = c("Rejection", "Species loss",
                                                 "Novel", "Colonisation", "Transient", "Persistence",  
                                                 "Absent" ))) %>% 
-    filter(outcome != "Absent") %>%
-    summarise(n = c((table(outcome)))) %>% 
-    mutate(outcome = c("Rejection", "Species loss",
+    filter(index != "Absent") %>%
+    summarise(n = c((table(index)))) %>% 
+    mutate(index = c("Rejection", "Species loss",
                        "Novel", "Colonisation", "Transient", "Persistence",  
                        "Absent")) 
   
@@ -747,7 +747,7 @@ for(i in 1:length( listofresults )){
                                                         "Post_4", "Week8", "Week10", "Week14" ))
   resultscounts[[ i ]]$patient.characteristics <- listofresults[[i]]$patient.characteristics %>% unique()
   resultscounts[[ i ]][c('Patient_ID', 'State', 'Donor', 'Pretreatment', 'Age', 'Sex')] <- str_split_fixed(resultscounts[[ i ]]$patient.characteristics, ' - ', 6)
-  resultscounts[[ i ]] <- resultscounts[[ i ]][c('Patient_ID', 'State', 'Donor', 'Pretreatment', 'Age', 'Sex' ,'timepoint', 'outcome', 'n')]
+  resultscounts[[ i ]] <- resultscounts[[ i ]][c('Patient_ID', 'State', 'Donor', 'Pretreatment', 'Age', 'Sex' ,'timepoint', 'index', 'n')]
 }
 ```
 
@@ -770,17 +770,17 @@ head( results.all.count )
 typeof( results.all.count )
 hist( results.all.count$n, n = 50 )
 results.all.count$timepoint %>% unique()
-results.all.count$outcome %>% unique()
+results.all.count$index %>% unique()
 ```
 
 ## Preprocessing for modeling
 
 ```{r Preprocessing the data, echo=TRUE}
 # Remove category 'Absent', because always 9
-results.all.count <- results.all.count  %>% filter( outcome != "Absent" )
+results.all.count <- results.all.count  %>% filter( index != "Absent" )
 
 # Remove information in Pre-FMT transient category (because always 0)
-results.all.count$n[ results.all.count$timepoint == "Pre_FMT"&results.all.count$outcome == "Transient" ] <- NA
+results.all.count$n[ results.all.count$timepoint == "Pre_FMT"&results.all.count$index == "Transient" ] <- NA
 
 # make time categorical (translate to weeks)
 results.all.count$time <- 0
@@ -803,15 +803,24 @@ results.all.count$Age2 <- results.all.count$Age / 10
 
 ## Model the ecological outcomes
 
-```{r Modelling, echo=TRUE, fig.width = 9}
+```{r Modelling, echo=TRUE, fig.width = 9, height = 9}
 # with 3 splines
-model.eco <- glmer.nb( n ~ ns( time2, df = 3 )  * outcome + State * outcome + Donor + Pretreatment + Age2 + Sex + ( 1 | Patient_ID ), 
+model.eco <- glmer.nb( n ~ ns( time2, df = 3 )  * index + State * index + Donor + Pretreatment + Age2 + Sex + ( 1 | Patient_ID ), 
                         data = results.all.count[ results.all.count$Patient_ID != "109" & 
                                                  results.all.count$Patient_ID != "117", ])
 summary( model.eco )
-plot_summs( model.eco )
 
-wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 5, 6, 7, 8, 9, 15:34 )) # ecological Outcome
+plot_summs( model.eco ) +
+theme( panel.grid.major = element_line(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(),
+    text = element_text( family = 'Helvetica' ),
+    legend.title = element_blank(), 
+    axis.text = element_text( size = 25 ),
+    axis.title = element_text( size = 15 ))
+
+wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 5, 6, 7, 8, 9, 15:34 )) # ecological index
 wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 10, 30, 31, 32, 33, 34 )) # Clinical state 
 wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 14 )) # Sex
 wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 13 )) # Age
@@ -823,24 +832,36 @@ wald.test( Sigma = vcov( model.eco ), b = fixef( model.eco ), Terms = c( 11 )) #
 ## Plot ecological outcomes per timepoint per disease state
 
 ```{r Plot outcomes per state, echo=TRUE, fig.width = 9, fig.height= 9, warning=FALSE}
+State.labs <- c( "Responders", "Non Responders")
+names( State.labs ) <- c( "Good", "None" )
+
 ggplot( results.all.count,
-        aes( x = timepoint, y = n, col = outcome )) + 
+        aes( x = timepoint, y = n, col = index )) + 
   geom_jitter() + 
   theme_bw() +
   geom_boxplot( alpha=0.2 ) + 
-  facet_grid( State ~ outcome, scales = "free" ) +
-  theme( axis.text.x = element_text( angle = 45, hjust = 1 )) 
+  facet_grid( State ~ index, scales = "free",
+              labeller = labeller(State = State.labs )) +
+  theme( text = element_text( size = 20 ),
+         axis.text.x = element_text( angle = 45, hjust = 1 )) 
 ```
 
 ## Plot ecological outcomes per timepoint per patient
 
 ```{r Plot outcomes per patient, echo=TRUE, fig.width = 9, fig.height = 9, warning=FALSE}
-ggplot( data = results.all.count, aes( x = timepoint, y = n, color = outcome ))+
-  geom_point( size = 2 )+
-  facet_wrap( facets = ~ Patient_ID * State ) +
+State.labs <- c( "Responder", "Non Responder")
+names( State.labs ) <- c( "Good", "None" )
+
+ggplot( data = results.all.count, aes( x = timepoint, y = n, color = index )) +
+  geom_point( size = 2 ) +
+  geom_line( aes( group = index )) +
+  facet_wrap( facets =  State ~ Patient_ID  ,
+              labeller = labeller(State = State.labs ),
+              ncol = 9, nrow = 3) +
   scale_y_log10() +
   theme_bw() +
-  ggtitle( "Outcome per patient" ) +
+  ggtitle( "Indices per patient" ) +
   labs( x = "Timepoint", y = "n (log)" ) +
-  theme( axis.text.x = element_text( angle = 45, hjust = 1 )) 
+  theme( text = element_text( size = 20 ),
+         axis.text.x = element_text( angle = 90 )) 
 ```

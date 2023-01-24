@@ -395,6 +395,222 @@ wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococ
 wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = 5 )$result # donor
 ```
 
+# Oscillospiraceae
+
+## Transform the data 
+
+```{r Histogramm Oscillospiraceae, echo=TRUE}
+hist( df$Oscillospiraceae )
+df$Oscillospiraceae.new = asin( sqrt( df$Oscillospiraceae ))
+hist( df$Oscillospiraceae.new )
+```
+
+```{r Proportion Oscillospiraceae, echo=TRUE}
+sum( df$Oscillospiraceae.new == 0 ) / length( df$Oscillospiraceae.new ) # proportion of zeros
+```
+
+```{r Plot data Oscillospiraceae, echo=TRUE}
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Oscillospiraceae
+ 
+```{r Plot Oscillospiraceae, echo=TRUE, fig.width = 9}
+a = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Oscillospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "right", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+
+Oscillospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Oscillospiraceae.plot
+```
+
+## Choose between the lmer and glmmTMB models Oscillospiraceae
+
+We have used time as a numeric value and added a spline at knots = 7.
+
+```{r Mixed model Oscillospiraceae, echo=TRUE}
+lme.int.Oscillospiraceae = lme( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
+               data = df, 
+               random = ~ 1 | subject_id )
+
+# lme.slope.Oscillospiraceae = lme( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
+               #data = df, 
+               #random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
+
+glmm.int.Oscillospiraceae = glmmTMB( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ 1 )
+
+#glmm.slope.Oscillospiraceae. = glmmTMB( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ 1 )
+
+AICc( lme.int.Oscillospiraceae )
+AICc( glmm.int.Oscillospiraceae ) # lower
+```
+
+# Diagnostics Oscillospiraceae
+
+```{r Diagnostics Oscillospiraceae, eval=FALSE}
+lmer.int.Oscillospiraceae = lmer(Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+lme.Oscillospiraceae.diag = DHARMa::simulateResiduals( lmer.int.Oscillospiraceae )
+plot( lme.Oscillospiraceae.diag )
+
+plotResiduals( lme.Oscillospiraceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$timepoint.new )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$treated_with_donor )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$sex ) 
+plotResiduals( lme.Oscillospiraceae.diag, form = df$age )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$pretreatment )
+
+testZeroInflation( lme.Oscillospiraceae.diag )
+testDispersion( lme.Oscillospiraceae.diag )
+
+output1 = recalculateResiduals( lme.Oscillospiraceae.diag, group = df$timepoint.new )
+testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
+```
+
+LMM was chosen due to better diagnostics than ZIGMM despite ZIGMM having a lower AICc value. 
+
+```{r Results Oscillospiraceae}
+plot_summs( lme.int.Oscillospiraceae )
+
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 2 )$result # sex
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 3 )$result # age
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 4 )$result # pretreatment
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 5 )$result # donor
+```
+
+# Eggerthellaceae
+
+## Transform the data 
+
+```{r Histogramm Eggerthellaceae, echo=TRUE}
+hist( df$Eggerthellaceae )
+df$Eggerthellaceae.new = asin( sqrt( df$Eggerthellaceae ))
+hist( df$Eggerthellaceae.new )
+```
+
+```{r Proportion Eggerthellaceae, echo=TRUE}
+sum( df$Eggerthellaceae.new == 0 ) / length( df$Eggerthellaceae.new ) # proportion of zeros
+```
+
+```{r Plot data Eggerthellaceae, echo=TRUE}
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Eggerthellaceae
+ 
+```{r Plot Eggerthellaceae, echo=TRUE, fig.width = 9}
+a = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Eggerthellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "right", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+
+Eggerthellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Eggerthellaceae.plot
+```
+
+## Choose between the lmer and glmmTMB models Eggerthellaceae
+
+We have used time as a numeric value and added a spline at knots = 7.
+
+```{r Mixed model Eggerthellaceae, echo=TRUE}
+lme.int.Eggerthellaceae = lme( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
+               data = df, 
+               random = ~ 1 | subject_id )
+
+# lme.slope.Eggerthellaceae = lme( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
+               # data = df, 
+               # random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
+
+glmm.int.Eggerthellaceae = glmmTMB( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+               family = gaussian, 
+               data = df, 
+               zi = ~ 1,
+               REML = TRUE )
+
+# glmm.slope.Eggerthellaceae = glmmTMB( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7) + ( ns( timepoint.new, knots = 7 ) | subject_id ), 
+               # family = gaussian, 
+               # data = df, 
+               # zi = ~ 1,
+               # REML = TRUE )
+
+AICc( lme.int.Eggerthellaceae ) # lower
+AICc( glmm.int.Eggerthellaceae )
+```
+
+# Diagnostics Eggerthellaceae
+
+```{r Diagnostics Eggerthellaceae, eval=FALSE}
+lmer.int.Eggerthellaceae = lmer(Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+lme.Eggerthellaceae.diag = DHARMa::simulateResiduals( lmer.int.Eggerthellaceae )
+plot( lme.Eggerthellaceae.diag )
+
+plotResiduals( lme.Eggerthellaceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( lme.Eggerthellaceae.diag, form = df$timepoint.new )
+plotResiduals( lme.Eggerthellaceae.diag, form = df$treated_with_donor )
+plotResiduals( lme.Eggerthellaceae.diag, form = df$sex ) 
+plotResiduals( lme.Eggerthellaceae.diag, form = df$age )
+plotResiduals( lme.Eggerthellaceae.diag, form = df$pretreatment )
+
+testZeroInflation( lme.Eggerthellaceae.diag )
+testDispersion( lme.Eggerthellaceae.diag )
+
+output1 = recalculateResiduals( lme.Eggerthellaceae.diag, group = df$timepoint.new )
+testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
+```
+
+LMM was chosen due to a lower AICc and adequate diagnostics. 
+
+```{r Results Eggerthellaceae}
+plot_summs( lme.int.Eggerthellaceae )
+
+wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
+wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 2 )$result # sex
+wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 3 )$result # age
+wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 4 )$result # pretreatment
+wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 5 )$result # donor
+```
+
 # Coefficients Plot - Comparison
 
 ```{r Coefficients plot data, echo=TRUE}
@@ -419,13 +635,26 @@ model = "Ruminococcaceae"
 rumino = data.frame( model = model, rumino )
 rumino = as_tibble( rumino )
 
+# Oscillospiraceae
+oscillo = broom.mixed::tidy( lme.int.Oscillospiraceae, conf.int = TRUE )
+oscillo = oscillo[ -c( 11:12 ), -c( 6,8 )]
+model = "Oscillospiraceae"
+oscillo = data.frame( model = model, oscillo )
+oscillo = as_tibble( oscillo )
+
+# Eggerthellaceae
+eggerth = broom.mixed::tidy( lme.int.Eggerthellaceae, conf.int = TRUE )
+eggerth = eggerth[ -c( 11:12 ), -c( 6,8 )]
+model = "Eggerthellaceae"
+eggerth = data.frame( model = model, eggerth )
+eggerth = as_tibble( eggerth )
 ```
 
 
 ```{r Coefficient Plot, echo=TRUE, fig.width = 9, fig.height = 9}
 # combine
 common <- intersect( colnames( prevo ), colnames( rumino ))
-all_bacteria = rbind( prevo[ common ], lachno[ common ], rumino[ common ])
+all_bacteria = rbind( prevo[ common ], lachno[ common ], rumino[ common ], oscillo[ common ], eggerth[ common ])
 
 # pdf( "coefficientsplot.pdf", width = 15, height = 11 )
 # dwplot( all_bacteria, dodge_size = 0.8, dot_args = list( size = 3 ),
