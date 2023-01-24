@@ -30,6 +30,8 @@ library( microbiomeutilities )
 library( RColorBrewer )
 library( patchwork )
 library( ggpubr )
+library( gridExtra )
+library( grid )
 ```
 
 ## Load the data
@@ -549,7 +551,8 @@ temp.125@sam_data[["timepoint.new"]] <- factor( temp.125@sam_data[["timepoint.ne
 # here we use plot_bar because we want to show samples that are not available
 pdonorA = plot_bar( temp.donorA, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         panel.grid.major = element_blank(),
         axis.title.y = element_blank(),
     panel.grid.minor = element_blank(),
@@ -561,9 +564,12 @@ pdonorA = plot_bar( temp.donorA, "timepoint.new", fill = "family" ) +
 
 pdonorB = plot_bar( temp.donorB, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
         legend.position = "none",
-        axis.title.y = element_blank()) +
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -571,10 +577,12 @@ pdonorB = plot_bar( temp.donorB, "timepoint.new", fill = "family" ) +
 
 p101 = plot_bar( temp.101, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -582,10 +590,14 @@ p101 = plot_bar( temp.101, "timepoint.new", fill = "family" ) +
 
 p102 = plot_bar( temp.102, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -593,10 +605,14 @@ p102 = plot_bar( temp.102, "timepoint.new", fill = "family" ) +
 
 p103 = plot_bar( temp.103, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE )+ 
@@ -604,10 +620,14 @@ p103 = plot_bar( temp.103, "timepoint.new", fill = "family" ) +
 
 p104 = plot_bar( temp.104, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -615,10 +635,14 @@ p104 = plot_bar( temp.104, "timepoint.new", fill = "family" ) +
 
 p105 = plot_bar( temp.105, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -626,10 +650,14 @@ p105 = plot_bar( temp.105, "timepoint.new", fill = "family" ) +
 
 p106 = plot_bar( temp.106, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE )+ 
@@ -637,10 +665,14 @@ p106 = plot_bar( temp.106, "timepoint.new", fill = "family" ) +
  
 p107 = plot_bar( temp.107, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x=element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -648,10 +680,12 @@ p107 = plot_bar( temp.107, "timepoint.new", fill = "family" ) +
 
 p108 = plot_bar( temp.108, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank()) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -659,10 +693,14 @@ p108 = plot_bar( temp.108, "timepoint.new", fill = "family" ) +
 
 p109 = plot_bar( temp.109, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
-        axis.title.x = element_blank()) + 
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -670,11 +708,13 @@ p109 = plot_bar( temp.109, "timepoint.new", fill = "family" ) +
 
 p110 = plot_bar( temp.110, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
+  theme( text = element_text(size = 20),
+         legend.title = element_blank(),  
         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -682,11 +722,14 @@ p110 = plot_bar( temp.110, "timepoint.new", fill = "family" ) +
 
 p111 = plot_bar( temp.111, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -694,11 +737,14 @@ p111 = plot_bar( temp.111, "timepoint.new", fill = "family" ) +
 
 p112 = plot_bar( temp.112, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -706,11 +752,14 @@ p112 = plot_bar( temp.112, "timepoint.new", fill = "family" ) +
 
 p113 = plot_bar( temp.113, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -718,11 +767,13 @@ p113 = plot_bar( temp.113, "timepoint.new", fill = "family" ) +
 
 p114 = plot_bar( temp.114, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
+  theme( text = element_text(size = 20),
+         legend.title = element_blank(),  
         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -730,11 +781,14 @@ p114 = plot_bar( temp.114, "timepoint.new", fill = "family" ) +
 
 p115 = plot_bar( temp.115, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -742,11 +796,14 @@ p115 = plot_bar( temp.115, "timepoint.new", fill = "family" ) +
 
 p117 = plot_bar( temp.117, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -754,11 +811,13 @@ p117 = plot_bar( temp.117, "timepoint.new", fill = "family" ) +
 
 p118 = plot_bar( temp.118, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
+  theme( text = element_text(size = 20),
+         legend.title = element_blank(),  
         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -766,11 +825,14 @@ p118 = plot_bar( temp.118, "timepoint.new", fill = "family" ) +
 
 p119 = plot_bar( temp.119, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -778,11 +840,14 @@ p119 = plot_bar( temp.119, "timepoint.new", fill = "family" ) +
 
 p120 = plot_bar( temp.120, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
+  theme( text = element_text(size = 20),
+         legend.position = "none",
         axis.title.x = element_blank(),
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -790,10 +855,10 @@ p120 = plot_bar( temp.120, "timepoint.new", fill = "family" ) +
 
 p121 = plot_bar( temp.121, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
         legend.title = element_blank(),  
         legend.position = "none",
-        axis.title.x = element_blank(),
         axis.title.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
@@ -802,10 +867,13 @@ p121 = plot_bar( temp.121, "timepoint.new", fill = "family" ) +
 
 p122 = plot_bar( temp.122, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
         legend.title = element_blank(),  
         legend.position = "none",
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -813,10 +881,14 @@ p122 = plot_bar( temp.122, "timepoint.new", fill = "family" ) +
 
 p123 = plot_bar( temp.123, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
-        legend.title = element_blank(),  
-        legend.position = "none",
-        axis.title.y = element_blank() ) + 
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -824,10 +896,13 @@ p123 = plot_bar( temp.123, "timepoint.new", fill = "family" ) +
 
 p124 = plot_bar( temp.124, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
         legend.title = element_blank(),  
         legend.position = "none",
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()  ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -835,9 +910,12 @@ p124 = plot_bar( temp.124, "timepoint.new", fill = "family" ) +
 
 p125 = plot_bar( temp.125, "timepoint.new", fill = "family" ) +
   theme_bw() +
-  theme( axis.text.x = element_text( angle = 90, hjust = 0.6 ),
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
         legend.position = "right",
-        axis.title.y = element_blank() ) + 
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()  ) + 
   labs( x = "Timepoint", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) +  
   scale_x_discrete( drop = FALSE ) + 
@@ -845,7 +923,11 @@ p125 = plot_bar( temp.125, "timepoint.new", fill = "family" ) +
 ```
 
 ```{r Final plot comp, echo=TRUE, fig.width = 11, fig.height=20}
-plot.compositions = (( pdonorA | pdonorB )  / ( p101 | p102 | p103 | p104 ) / ( p105 | p106 | p107 | p108 ) / ( p109 | p110 | p111 | p112 ) / ( p113 | p114 | p115 | p117 ) / ( p118 | p119 | p120 | p121 ) / ( p122 | p123 | p124 | p125 )) + plot_layout( guides = 'collect' )
+# plot.compositions = (( pdonorA | pdonorB )  / ( p101 | p102 | p103 | p104 ) / ( p105 | p106 | p107 | p108 ) / ( p109 | p110 | p111 | p112 ) / ( p113 | p114 | p115 | p117 ) / ( p118 | p119 | p120 | p121 ) / ( p122 | p123 | p124 | p125 )) + plot_layout( guides = 'collect' )
 
-plot.compositions
+# plot.compositions = (( pdonorA + labs( tag = 'A' ) | pdonorB + labs( tag = 'B' ))  / ( p101 + labs( tag = 'C' ) | p105 + labs( tag = 'D' ) | p102 + labs( tag = 'E' ) | p103 + labs( tag = 'F' ) ) / ( p108 + labs( tag = 'G' ) | p109 + labs( tag = 'H' ) | p104 + labs( tag = 'I' ) | p106 + labs( tag = 'J' )) / ( p110 + labs( tag = 'K' ) | p111 + labs( tag = 'L' ) | p107 + labs( tag = 'M' ) | p112 + labs( tag = 'N' ) ) / ( p114 + labs( tag = 'O' ) | p117 + labs( tag = 'P' ) | p113 + labs( tag = 'Q' ) | p115 + labs( tag = 'R' ) ) / ( p118 + labs( tag = 'S' ) | p119 + labs( tag = 'T' ) | p120 + labs( tag = 'U' ) | p123 + labs( tag = 'V' ) ) / ( p121 + labs( tag = 'W' ) | p122 + labs( tag = 'X' ) | p124 + labs( tag = 'Y' ) | p125 + labs( tag = 'Z' ) )) + plot_layout( guides = 'collect' )
+
+plot.compositions = (( pdonorA | pdonorB )  / ( p101 | p105 | p102 | p103 ) / ( p108 | p109 | p104 | p106 ) / ( p110 | p111 | p107 | p112 ) / ( p114 | p117 | p113 | p115 ) / ( p118 | p119 | p120 | p123 ) / ( p121 | p122 | p124 | p125 )) + plot_layout( guides = 'collect' )
+
+grid.arrange( patchworkGrob( plot.compositions ), left = textGrob( "Relative abundances", gp = gpar( fontsize = 20 ), rot = 90 ) )
 ```
