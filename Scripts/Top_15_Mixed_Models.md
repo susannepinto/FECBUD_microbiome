@@ -61,6 +61,9 @@ physeq_mOTU
 # Remove donors from data
 physeq_mOTU = subset_samples( physeq_mOTU, subject_id != "Donor A" )
 physeq_mOTU = subset_samples( physeq_mOTU, subject_id != "Donor B" )
+
+# make new class - Coriobacteriaceae
+physeq_mOTU = merge_taxa2(physeq_mOTU, pattern = "_Coriobacteriaceae", name = "Coriobacteriaceae")
 ```
 
 ``` r
@@ -84,28 +87,28 @@ abund = as.data.frame(as.matrix(t(physeq_mOTU@otu_table)))
 df = data.frame(abund, sample.data)
 ```
 
-# Prevotellaceae
+# Bacteroidaceae
 
 ## Transform the data
 
 ``` r
-hist( df$Prevotellaceae )
+hist( df$Bacteroidaceae )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Prevotellaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Bacteroidaceae-1.png)<!-- -->
 
 ``` r
-df$Prevotellaceae.new = asin( sqrt( df$Prevotellaceae ))
-hist( df$Prevotellaceae.new )
+df$Bacteroidaceae.new = asin( sqrt( df$Bacteroidaceae ))
+hist( df$Bacteroidaceae.new )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Prevotellaceae-2.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Bacteroidaceae-2.png)<!-- -->
 
 ``` r
-sum( df$Prevotellaceae.new == 0 ) / length( df$Prevotellaceae.new ) # proportion of zeros
+sum( df$Bacteroidaceae.new == 0 ) / length( df$Bacteroidaceae.new ) # proportion of zeros
 ```
 
-    ## [1] 0.3611111
+    ## [1] 0.02222222
 
 ``` r
 # None responders
@@ -115,10 +118,10 @@ df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subs
 df.good = subset( df, clinical_outcome_wk14 == "Good" )
 ```
 
-## Plot Prevotellaceae
+## Plot Bacteroidaceae
 
 ``` r
-a = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Prevotellaceae", 
+a = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Bacteroidaceae", 
            panel = function( x, y ) {
              panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
            },
@@ -126,144 +129,702 @@ a = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = d
                       lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
                       text = list( c( "Non-Responders", "Responders" ))))
 
-b = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+b = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
            panel = function( x, y ) {
              panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
            })
 
-c = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+c = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
 
-d = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+d = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
 
-Prevotellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Prevotellaceae.plot
+Bacteroidaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bacteroidaceae.plot
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Prevotellaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Bacteroidaceae-1.png)<!-- -->
 
-## Choose between the lmer and glmmTMB models Prevotellaceae
+## Choose between the lmer and glmmTMB models Bacteroidaceae
 
 We have used time as a numeric value and added a spline at knots = 7.
 
 ``` r
-lme.int.Prevotellaceae = lmer( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), data = df )
+lme.int.Bacteroidaceae = lme4::lmer(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
 
-# lme.slope.Prevotellaceae = lmer( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), data = df )
+#lme.int.Bacteroidaceae = lme4::lmer(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-glmm.int.Prevotellaceae = glmmTMB( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+glmm.int.Bacteroidaceae = glmmTMB(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
-               zi = ~ 1,
-               REML = TRUE )
+               zi= ~ 1) 
 
-# glmm.slope.Prevotellaceae = glmmTMB( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
+#glmm.slope.Bacteroidaceae = glmmTMB(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
-               #zi = ~ 1,
-               #REML = TRUE )
+               #zi= ~ 1) 
 
-AICc( lme.int.Prevotellaceae ) # lower
+AICc(lme.int.Bacteroidaceae)
 ```
 
-    ## [1] 20.47816
+    ## [1] -274.0412
 
 ``` r
-AICc( glmm.int.Prevotellaceae )
+AICc(glmm.int.Bacteroidaceae) # lower
 ```
 
-    ## [1] 22.80267
+    ## [1] -328.5049
 
-# Diagnostics Prevotellaceae
+# Diagnostics Bacteroidaceae
 
 ``` r
-lme.Prevotellaceae.diag = DHARMa::simulateResiduals( lme.int.Prevotellaceae )
-plot( lme.Prevotellaceae.diag )
+lme.Bacteroidaceae.diag = DHARMa::simulateResiduals( lme.int.Bacteroidaceae )
+plot( lme.Bacteroidaceae.diag )
 
-plotResiduals( lme.Prevotellaceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( lme.Prevotellaceae.diag, form = df$timepoint.new )
-plotResiduals( lme.Prevotellaceae.diag, form = df$treated_with_donor )
-plotResiduals( lme.Prevotellaceae.diag, form = df$sex ) 
-plotResiduals( lme.Prevotellaceae.diag, form = df$age )
-plotResiduals( lme.Prevotellaceae.diag, form = df$pretreatment )
+plotResiduals( lme.Bacteroidaceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( lme.Bacteroidaceae.diag, form = df$timepoint.new )
+plotResiduals( lme.Bacteroidaceae.diag, form = df$treated_with_donor )
+plotResiduals( lme.Bacteroidaceae.diag, form = df$sex ) 
+plotResiduals( lme.Bacteroidaceae.diag, form = df$age )
+plotResiduals( lme.Bacteroidaceae.diag, form = df$pretreatment )
 
-testZeroInflation( lme.Prevotellaceae.diag )
-testDispersion( lme.Prevotellaceae.diag )
+testZeroInflation( lme.Bacteroidaceae.diag )
+testDispersion( lme.Bacteroidaceae.diag )
 
-output1 = recalculateResiduals( lme.Prevotellaceae.diag, group = df$timepoint.new )
+output1 = recalculateResiduals( lme.Bacteroidaceae.diag, group = df$timepoint.new )
 testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
 ```
 
-As there were no major differences in diagnostics between LMM and ZIGMM,
-the LMM model was chosen due to its lower AICc value.
+LMM model was chosen due to slightly better diagnostics.
 
 ``` r
-plot_summs( lme.int.Prevotellaceae )
+plot_summs( lme.int.Bacteroidaceae )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Prevotellaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Bacteroidaceae-1.png)<!-- -->
 
 ``` r
-wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
-```
-
-    ## $chi2
-    ##        chi2          df           P 
-    ## 13.39249451  3.00000000  0.00386031
-
-``` r
-wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 2 )$result # sex
+wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 2 )$result # sex
 ```
 
     ## $chi2
     ##      chi2        df         P 
-    ## 1.5899848 1.0000000 0.2073283
+    ## 1.2508746 1.0000000 0.2633855
 
 ``` r
-wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 3 )$result # age
+wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 3 )$result # age
 ```
 
     ## $chi2
-    ##     chi2       df        P 
-    ## 1.089428 1.000000 0.296598
+    ##      chi2        df         P 
+    ## 0.2390284 1.0000000 0.6249087
 
 ``` r
-wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 4 )$result # pretreatment
+wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 4 )$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.0103796 1.0000000 0.3148119
+
+``` r
+wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 5 )$result # donor
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.08342805 1.00000000 0.77270448
+
+``` r
+wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 7.72418680 3.00000000 0.05206948
+
+# Bacteroidalesfam.incertaesedis
+
+``` r
+sum(df$Bacteroidalesfam.incertaesedis == 0) / length(df$Bacteroidalesfam.incertaesedis)
+```
+
+    ## [1] 0.3277778
+
+``` r
+xyplot(Bacteroidalesfam.incertaesedis ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Bacteroidalesfam.incertaesedis", ylab = "Bifidobacteriaceae", ylim = c(0, 0.05),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
+hist(df$Bacteroidalesfam.incertaesedis)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+
+``` r
+df$Bacteroidalesfam.incertaesedis.new = asin(sqrt(df$Bacteroidalesfam.incertaesedis))
+hist(df$Bacteroidalesfam.incertaesedis.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
+
+``` r
+xyplot(Bacteroidalesfam.incertaesedis.new ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Bacteroidalesfam.incertaesedis", ylab = "Bifidobacteriaceae", ylim = c(0, 0.15),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-2-4.png)<!-- -->
+
+``` r
+lme.int.Bacteroidalesfam.incertaesedis = lmer(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+#lme.slope.Bacteroidalesfam.incertaesedis = lmer(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
+
+glmm.int.Bacteroidalesfam.incertaesedis = glmmTMB(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ clinical_outcome_wk14)
+
+#glmm.slope.Bacteroidalesfam.incertaesedis = glmmTMB(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ clinical_outcome_wk14) 
+
+AICc(lme.int.Bacteroidalesfam.incertaesedis)
+```
+
+    ## [1] -401.876
+
+``` r
+AICc(glmm.int.Bacteroidalesfam.incertaesedis) # lower
+```
+
+    ## [1] -472.4924
+
+``` r
+# diagnostics zigmm
+glmm.Bacteroidalesfam.incertaesedis.diag = DHARMa::simulateResiduals(glmm.int.Bacteroidalesfam.incertaesedis)
+
+plot(glmm.Bacteroidalesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-3.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-4.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-5.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-6.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-7.png)<!-- -->
+
+``` r
+testZeroInflation(glmm.Bacteroidalesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = 54.029, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(glmm.Bacteroidalesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.99185, p-value = 0.952
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(glmm.Bacteroidalesfam.incertaesedis.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-4-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 2.0085, p-value = 0.9893
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+# diagnostics lme
+lme.Bacteroidalesfam.incertaesedis.diag = DHARMa::simulateResiduals(lme.int.Bacteroidalesfam.incertaesedis)
+
+plot(lme.Bacteroidalesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bacteroidalesfam.incertaesedis.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bacteroidalesfam.incertaesedis.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bacteroidalesfam.incertaesedis.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bacteroidalesfam.incertaesedis.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-5.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bacteroidalesfam.incertaesedis.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-6.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bacteroidalesfam.incertaesedis.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-7.png)<!-- -->
+
+``` r
+testZeroInflation(lme.Bacteroidalesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(lme.Bacteroidalesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.81644, p-value = 0.424
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(lme.Bacteroidalesfam.incertaesedis.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-5-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 1.9281, p-value = 0.9101
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 2)$result # sex
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.5729724 1.0000000 0.2097759
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 3)$result # age
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.0224265 1.0000000 0.3119441
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 4)$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 2.0403603 1.0000000 0.1531734
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 5)$result # donor
 ```
 
     ## $chi2
     ##        chi2          df           P 
-    ## 0.008037087 1.000000000 0.928565509
+    ## 0.004073397 1.000000000 0.949111029
 
 ``` r
-wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 5 )$result # donor
+wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = c(6, 9, 10))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.8840161 3.0000000 0.5968249
+
+# Bifidobacteriaceae
+
+``` r
+sum(df$Bifidobacteriaceae == 0) / length(df$Bifidobacteriaceae)
+```
+
+    ## [1] 0.1833333
+
+``` r
+xyplot(Bifidobacteriaceae ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Bifidobacteriaceae", ylim = c(0, 0.03),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+hist(df$Bifidobacteriaceae)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+
+``` r
+df$Bifidobacteriaceae.new = asin(sqrt(df$Bifidobacteriaceae))
+hist(df$Bifidobacteriaceae.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+
+``` r
+xyplot(Bifidobacteriaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Bifidobacteriaceae", ylim = c(0, 0.15),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-8-4.png)<!-- -->
+
+``` r
+lme.int.Bifidobacteriaceae = lmer(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+#lme.slope.Bifidobacteriaceae = lmer(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
+
+glmm.int.Bifidobacteriaceae = glmmTMB(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ 1)
+
+#glmm.slope.Bifidobacteriaceae = glmmTMB(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ 1) 
+
+AICc(lme.int.Bifidobacteriaceae)
+```
+
+    ## [1] -423.3096
+
+``` r
+AICc(glmm.int.Bifidobacteriaceae) # lower
+```
+
+    ## [1] -488.4
+
+``` r
+# diagnostics zigmm
+glmm.Bifidobacteriaceae.diag = DHARMa::simulateResiduals(glmm.int.Bifidobacteriaceae)
+
+plot(glmm.Bifidobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bifidobacteriaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bifidobacteriaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bifidobacteriaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bifidobacteriaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-5.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bifidobacteriaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-6.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Bifidobacteriaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-7.png)<!-- -->
+
+``` r
+testZeroInflation(glmm.Bifidobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(glmm.Bifidobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 1.0273, p-value = 0.76
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(glmm.Bifidobacteriaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-10-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 1.5908, p-value = 0.5153
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+# diagnostics lme
+lme.Bifidobacteriaceae.diag = DHARMa::simulateResiduals(lme.int.Bifidobacteriaceae)
+
+plot(lme.Bifidobacteriaceae.diag)
+```
+
+    ## Warning in newton(lsp = lsp, X = G$X, y = G$y, Eb = G$Eb, UrS = G$UrS, L =
+    ## G$L, : Fitting terminated with step failure - check results carefully
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bifidobacteriaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bifidobacteriaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bifidobacteriaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bifidobacteriaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-5.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bifidobacteriaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-6.png)<!-- -->
+
+``` r
+plotResiduals(lme.Bifidobacteriaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-7.png)<!-- -->
+
+``` r
+testZeroInflation(lme.Bifidobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(lme.Bifidobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.90665, p-value = 0.576
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(lme.Bifidobacteriaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-11-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 1.5675, p-value = 0.4912
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 2)$result # sex
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.6082058 1.0000000 0.2047442
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 3)$result # age
 ```
 
     ## $chi2
     ##     chi2       df        P 
-    ## 0.305256 1.000000 0.580606
+    ## 2.697083 1.000000 0.100532
 
-# Lachnospiraceae
+``` r
+wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 4)$result # pretreatment
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.06257952 1.00000000 0.80246440
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 5)$result # donor
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 5.17560979 1.00000000 0.02290613
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = c(6, 9, 10))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 5.9368420 3.0000000 0.1147238
+
+# Clostridiaceae
 
 ## Transform the data
 
 ``` r
-hist( df$Lachnospiraceae )
+hist( df$Clostridiaceae )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Lachnospiraceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Clostridiaceae-1.png)<!-- -->
 
 ``` r
-df$Lachnospiraceae.new = asin( sqrt( df$Lachnospiraceae ))
-hist( df$Lachnospiraceae.new )
+df$Clostridiaceae.new = asin( sqrt( df$Clostridiaceae ))
+hist( df$Clostridiaceae.new )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Lachnospiraceae-2.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Clostridiaceae-2.png)<!-- -->
 
 ``` r
-sum( df$Lachnospiraceae.new == 0 ) / length( df$Lachnospiraceae.new ) # proportion of zeros
+sum( df$Clostridiaceae.new == 0 ) / length( df$Clostridiaceae.new ) # proportion of zeros
 ```
 
-    ## [1] 0.01111111
+    ## [1] 0.01666667
 
 ``` r
 # None responders
@@ -273,10 +834,10 @@ df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subs
 df.good = subset( df, clinical_outcome_wk14 == "Good" )
 ```
 
-## Plot Lachnospiraceae
+## Plot Clostridiaceae
 
 ``` r
-a = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Lachnospiraceae", 
+a = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Clostridiaceae", 
            panel = function( x, y ) {
              panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
            },
@@ -284,121 +845,96 @@ a = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = 
                       lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
                       text = list( c( "Non-Responders", "Responders" ))))
 
-b = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+b = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
            panel = function( x, y ) {
              panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
            })
 
-c = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+c = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
 
-d = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+d = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
 
-Lachnospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Lachnospiraceae.plot
+Clostridiaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Clostridiaceae.plot
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Lachnospiraceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Clostridiaceae-1.png)<!-- -->
 
-## Choose between the lmer and glmmTMB models Lachnospiraceae
+## Choose between the lmer and glmmTMB models Clostridiaceae
 
 We have used time as a numeric value and added a spline at knots = 7.
 
 ``` r
-lme.int.Lachnospiraceae = lmer( Lachnospiraceae.new~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), data = df )
+lme.int.Clostridiaceae = lme( Clostridiaceae.new~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
+               data = df, 
+               random = ~ 1 | subject_id )
 
-# lme.slope.Lachnospiraceaee = lmer( Lachnospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ),data = df )
+# lme.slope.Clostridiaceae = lme( Clostridiaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
+              # data = df, 
+              # random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
 
-glmm.int.Lachnospiraceae = glmmTMB( Lachnospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+glmm.int.Clostridiaceae = glmmTMB( Clostridiaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
                family = gaussian, 
                data = df, 
-               zi = ~ 1,
-               REML = TRUE )
+               zi= ~ 1 )
 
-# glmm.slope.Lachnospiraceae = glmmTMB( Lachnospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
-               #family = gaussian, 
-               #data = df, 
-               #zi = ~ 1,
-               #REML = TRUE )
+# glmm.slope.Clostridiaceae = glmmTMB( Clostridiaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns(timepoint.new.num, knots = 7 ) | subject_id ), 
+               # family = gaussian, 
+               # data = df, 
+               # zi= ~ 1 )
 
-AICc( lme.int.Lachnospiraceae ) # lower
+AICc( lme.int.Clostridiaceae )
 ```
 
-    ## [1] -248.4765
+    ## [1] -373.0101
 
 ``` r
-AICc( glmm.int.Lachnospiraceae )
+AICc( glmm.int.Clostridiaceae ) # lower
 ```
 
-    ## [1] -246.1519
+    ## [1] -431.8529
 
-# Diagnostics Lachnospiraceae
+# Diagnostics Clostridiaceae
 
 ``` r
-lme.Lachnospiraceae.diag = DHARMa::simulateResiduals( lme.int.Lachnospiraceae )
-plot( lme.Lachnospiraceae.diag )
+glmm.Clostridiaceae.diag = DHARMa::simulateResiduals( glmm.int.Clostridiaceae )
+plot( glmm.Clostridiaceae.diag )
 
-plotResiduals( lme.Lachnospiraceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( lme.Lachnospiraceae.diag, form = df$timepoint.new )
-plotResiduals( lme.Lachnospiraceae.diag, form = df$treated_with_donor )
-plotResiduals( lme.Lachnospiraceae.diag, form = df$sex ) 
-plotResiduals( lme.Lachnospiraceae.diag, form = df$age )
-plotResiduals( lme.Lachnospiraceae.diag, form = df$pretreatment )
+plotResiduals( glmm.Clostridiaceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( glmm.Clostridiaceae.diag, form = df$timepoint.new )
+plotResiduals( glmm.Clostridiaceae.diag, form = df$treated_with_donor )
+plotResiduals( glmm.Clostridiaceae.diag, form = df$sex ) 
+plotResiduals( glmm.Clostridiaceae.diag, form = df$age )
+plotResiduals( glmm.Clostridiaceae.diag, form = df$pretreatment )
 
-testZeroInflation( lme.Lachnospiraceae.diag )
-testDispersion( lme.Lachnospiraceae.diag )
+testZeroInflation( glmm.Clostridiaceae.diag )
+testDispersion( glmm.Clostridiaceae.diag )
 
-output1 = recalculateResiduals( lme.Lachnospiraceae.diag, group = df$timepoint.new )
+output1 = recalculateResiduals( glmm.Clostridiaceae.diag, group = df$timepoint.new )
 testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
 ```
 
-LMM was chosen due to its lower AICc value compared to ZIGMM as well as
-its adequate diagnostics.
+ZIGMM model had a lower AICc and similar diagnostics to the LMM.
 
 ``` r
-plot_summs( lme.int.Lachnospiraceae )
+conf.int = data.frame( confint( glmm.int.Clostridiaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:21 ), ]
+
+clostridfam = broom.mixed::tidy( glmm.int.Clostridiaceae )[ , -c( 1 )]
+clostridfam = clostridfam[ -c( 11:23 ), ]
+clostridfam = clostridfam[ , -c( 1 )]
+effect = "fixed"
+
+clostridfam = data.frame( model = "Clostridiales incertaesedis", effect = effect, clostridfam, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+clostridfam = clostridfam[ , -c( 8 )]
+clostridfam = as_tibble( clostridfam )
+
+dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Lachnospiraceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
-```
-
-    ## $chi2
-    ##        chi2          df           P 
-    ## 10.66533649  3.00000000  0.01368026
-
-``` r
-wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 2 )$result # sex
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 3.55444847 1.00000000 0.05938604
-
-``` r
-wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 3 )$result # age
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 0.01468133 1.00000000 0.90355912
-
-``` r
-wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 4 )$result # pretreatment
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.2188204 1.0000000 0.6399402
-
-``` r
-wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 5 )$result # donor
-```
-
-    ## $chi2
-    ##     chi2       df        P 
-    ## 0.115300 1.000000 0.734189
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Clostridiaceae-1.png)<!-- -->
 
 # Clostridialesfam.incertaesedis
 
@@ -408,14 +944,14 @@ wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospi
 hist( df$Clostridialesfam.incertaesedis )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Clostridialesfam.incertaesedis-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Clostridialesfam.incertaesedis-1.png)<!-- -->
 
 ``` r
 df$Clostridialesfam.incertaesedis.new = asin( sqrt( df$Clostridialesfam.incertaesedis ))
 hist( df$Clostridialesfam.incertaesedis.new )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Clostridialesfam.incertaesedis-2.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Clostridialesfam.incertaesedis-2.png)<!-- -->
 
 ``` r
 sum( df$Clostridialesfam.incertaesedis.new == 0 ) / length( df$Clostridialesfam.incertaesedis.new ) # proportion of zeros
@@ -455,7 +991,7 @@ Clostridialesfam.incertaesedis.plot = a + as.layer( b ) + as.layer( c ) + as.lay
 Clostridialesfam.incertaesedis.plot
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Clostridialesfam.incertaesedis-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Clostridialesfam.incertaesedis-1.png)<!-- -->
 
 ## Choose between the lmer and glmmTMB models Clostridialesfam.incertaesedis
 
@@ -534,15 +1070,7 @@ clostridfam = as_tibble( clostridfam )
 dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Clostridialesfam.incertaesedis-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.5442520 3.0000000 0.9090673
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Clostridialesfam.incertaesedis-1.png)<!-- -->
 
 ``` r
 wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = 2 )$result # sex
@@ -576,6 +1104,1529 @@ wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]]
     ##      chi2        df         P 
     ## 0.2329128 1.0000000 0.6293724
 
+``` r
+wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.5442520 3.0000000 0.9090673
+
+# Coriobacteriaceae
+
+``` r
+sum(df$Coriobacteriaceae == 0) / length(df$Coriobacteriaceae) 
+```
+
+    ## [1] 0.1444444
+
+``` r
+xyplot(Coriobacteriaceae ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Coriobacteriaceae", ylim = c(0, 0.04),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
+hist(df$Coriobacteriaceae)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
+
+``` r
+df$Coriobacteriaceae.new = asin(sqrt(df$Coriobacteriaceae))
+hist(df$Coriobacteriaceae.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
+
+``` r
+xyplot(Coriobacteriaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Coriobacteriaceae", ylim = c(0, 0.2),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-14-4.png)<!-- -->
+
+``` r
+lme.int.Coriobacteriaceae = lmer(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+#lme.slope.Coriobacteriaceae = lmer(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
+
+glmm.int.Coriobacteriaceae = glmmTMB(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ 1)
+
+#glmm.slope.Coriobacteriaceae = glmmTMB(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ 1) 
+
+AICc(lme.int.Coriobacteriaceae)
+```
+
+    ## [1] -448.087
+
+``` r
+AICc(glmm.int.Coriobacteriaceae) # lower
+```
+
+    ## [1] -515.3126
+
+``` r
+# diagnostics zigmm
+glmm.Coriobacteriaceae.diag = DHARMa::simulateResiduals(glmm.int.Coriobacteriaceae)
+
+plot(glmm.Coriobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Coriobacteriaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Coriobacteriaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-3.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Coriobacteriaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-4.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Coriobacteriaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-5.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Coriobacteriaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-6.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Coriobacteriaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-7.png)<!-- -->
+
+``` r
+testZeroInflation(glmm.Coriobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(glmm.Coriobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 1.0031, p-value = 0.92
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(glmm.Coriobacteriaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-16-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 2.7067, p-value = 0.2503
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+# diagnostics lme
+lme.Coriobacteriaceae.diag = DHARMa::simulateResiduals(lme.int.Coriobacteriaceae)
+
+plot(lme.Coriobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+``` r
+plotResiduals(lme.Coriobacteriaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+
+``` r
+plotResiduals(lme.Coriobacteriaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
+
+``` r
+plotResiduals(lme.Coriobacteriaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
+
+``` r
+plotResiduals(lme.Coriobacteriaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-5.png)<!-- -->
+
+``` r
+plotResiduals(lme.Coriobacteriaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-6.png)<!-- -->
+
+``` r
+plotResiduals(lme.Coriobacteriaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-7.png)<!-- -->
+
+``` r
+testZeroInflation(lme.Coriobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(lme.Coriobacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.88804, p-value = 0.464
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(lme.Coriobacteriaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-17-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 2.6932, p-value = 0.2602
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 2)$result # sex
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.2755894 1.0000000 0.5996068
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 3)$result # age
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 3.4463738 1.0000000 0.0633907
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 4)$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.4753432 1.0000000 0.4905392
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 5)$result # donor
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.06039145 1.00000000 0.80587831
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = c(6, 9, 10))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 5.2953155 3.0000000 0.1514067
+
+# Eubacteriaceae
+
+``` r
+sum(df$Eubacteriaceae == 0) / length(df$Eubacteriaceae)
+```
+
+    ## [1] 0.03333333
+
+``` r
+xyplot(Eubacteriaceae ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Eubacteriaceae",
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+``` r
+hist(df$Eubacteriaceae)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+
+``` r
+df$Eubacteriaceae.new = asin(sqrt(df$Eubacteriaceae))
+hist(df$Eubacteriaceae.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-20-3.png)<!-- -->
+
+``` r
+xyplot(Eubacteriaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Eubacteriaceae",
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-20-4.png)<!-- -->
+
+``` r
+library(nlme)
+
+lme.int.Eubacteriaceae = lme(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7), 
+               data = df, 
+               random = ~ 1 | subject_id)
+
+lme.slope.Eubacteriaceae = lme(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7), 
+               data = df, 
+               random = ~ ns(timepoint.new.num, knots = 7) | subject_id)
+
+anova_results = anova(lme.int.Eubacteriaceae, lme.slope.Eubacteriaceae)
+mixtureLRT = anova_results[["L.Ratio"]][2]
+0.5 * pchisq(mixtureLRT, 1, lower.tail = FALSE) + 0.5 * pchisq(mixtureLRT, 2, lower.tail = FALSE) # use random-slopes
+```
+
+    ## [1] 0.00172291
+
+``` r
+glmm.int.Eubacteriaceae = glmmTMB(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
+               family = gaussian, 
+               data = df, 
+               zi = ~ 1,
+               REML = TRUE)
+
+lme.slope.Eubacteriaceae = lmer(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
+
+#glmm.slope.Eubacteriaceae = glmmTMB(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi = ~ 1,
+               #REML = TRUE)
+
+AICc(lme.slope.Eubacteriaceae) # lower
+```
+
+    ## [1] -298.627
+
+``` r
+AICc(glmm.int.Eubacteriaceae)
+```
+
+    ## [1] -296.4785
+
+``` r
+# diagnostics lme
+lme.Eubacteriaceae.diag = DHARMa::simulateResiduals(lme.slope.Eubacteriaceae)
+
+plot(lme.Eubacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+``` r
+plotResiduals(lme.Eubacteriaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-2.png)<!-- -->
+
+``` r
+plotResiduals(lme.Eubacteriaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-3.png)<!-- -->
+
+``` r
+plotResiduals(lme.Eubacteriaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-4.png)<!-- -->
+
+``` r
+plotResiduals(lme.Eubacteriaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-5.png)<!-- -->
+
+``` r
+plotResiduals(lme.Eubacteriaceae.diag, form = df$age)
+```
+
+    ## qu = 0.75, log(sigma) = -2.568769 : outer Newton did not converge fully.
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-6.png)<!-- -->
+
+``` r
+plotResiduals(lme.Eubacteriaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-7.png)<!-- -->
+
+``` r
+testZeroInflation(lme.Eubacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(lme.Eubacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.8617, p-value = 0.528
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(lme.Eubacteriaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-22-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 2.0318, p-value = 0.9601
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+# diagnostics zigmm
+glmm.Eubacteriaceae.diag = DHARMa::simulateResiduals(glmm.int.Eubacteriaceae)
+
+plot(glmm.Eubacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Eubacteriaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Eubacteriaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Eubacteriaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Eubacteriaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-5.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Eubacteriaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-6.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Eubacteriaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-7.png)<!-- -->
+
+``` r
+testZeroInflation(glmm.Eubacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(glmm.Eubacteriaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.85777, p-value = 0.304
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(glmm.Eubacteriaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-23-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 1.8573, p-value = 0.8225
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 2)$result # sex
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.4357754 1.0000000 0.5091686
+
+``` r
+wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 3)$result # age
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.1476811 1.0000000 0.7007613
+
+``` r
+wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 4)$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.4566400 1.0000000 0.4991985
+
+``` r
+wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 5)$result # donor
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.9215501 1.0000000 0.3370683
+
+``` r
+wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = c(6, 9, 10))$result
+```
+
+    ## $chi2
+    ##     chi2       df        P 
+    ## 1.593260 3.000000 0.660919
+
+# Firmicutesfam.incertaesedis
+
+``` r
+sum(df$Firmicutesfam.incertaesedis == 0) / length(df$Firmicutesfam.incertaesedis)
+```
+
+    ## [1] 0.1388889
+
+``` r
+xyplot(Firmicutesfam.incertaesedis ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Firmicutesfam.incertaesedis", ylim = c(0, 0.04),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+
+``` r
+hist(df$Firmicutesfam.incertaesedis)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-26-2.png)<!-- -->
+
+``` r
+df$Firmicutesfam.incertaesedis.new = asin(sqrt(df$Firmicutesfam.incertaesedis))
+hist(df$Firmicutesfam.incertaesedis.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-26-3.png)<!-- -->
+
+``` r
+xyplot(Firmicutesfam.incertaesedis ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Firmicutesfam.incertaesedis", ylim = c(0, 0.04), 
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-26-4.png)<!-- -->
+
+``` r
+lme.int.Firmicutesfam.incertaesedis = lmer(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+#lme.slope.Firmicutesfam.incertaesedis = lmer(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
+
+glmm.int.Firmicutesfam.incertaesedis = glmmTMB(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
+               family = gaussian, 
+               data = df, 
+               zi = ~ 1,
+               REML = TRUE)
+
+#glmm.slope.Firmicutesfam.incertaesedis = glmmTMB(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi = ~ clinical_outcome_wk14 + ( 1 | subject_id),
+               #REML = TRUE)
+
+AICc(lme.int.Firmicutesfam.incertaesedis) # lower
+```
+
+    ## [1] -487.2808
+
+``` r
+AICc(glmm.int.Firmicutesfam.incertaesedis)
+```
+
+    ## [1] -484.9563
+
+``` r
+# diagnostics lme
+lme.Firmicutesfam.incertaesedis.diag = DHARMa::simulateResiduals(lme.int.Firmicutesfam.incertaesedis)
+
+plot(lme.Firmicutesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+
+``` r
+plotResiduals(lme.Firmicutesfam.incertaesedis.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-2.png)<!-- -->
+
+``` r
+plotResiduals(lme.Firmicutesfam.incertaesedis.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-3.png)<!-- -->
+
+``` r
+plotResiduals(lme.Firmicutesfam.incertaesedis.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-4.png)<!-- -->
+
+``` r
+plotResiduals(lme.Firmicutesfam.incertaesedis.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-5.png)<!-- -->
+
+``` r
+plotResiduals(lme.Firmicutesfam.incertaesedis.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-6.png)<!-- -->
+
+``` r
+plotResiduals(lme.Firmicutesfam.incertaesedis.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-7.png)<!-- -->
+
+``` r
+testZeroInflation(lme.Firmicutesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(lme.Firmicutesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.88674, p-value = 0.576
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(lme.Firmicutesfam.incertaesedis.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-28-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 2.5984, p-value = 0.3353
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+# diagnostics zigmm
+glmm.Firmicutesfam.incertaesedis.diag = DHARMa::simulateResiduals(glmm.int.Firmicutesfam.incertaesedis)
+
+plot(glmm.Firmicutesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Firmicutesfam.incertaesedis.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-2.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Firmicutesfam.incertaesedis.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-3.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Firmicutesfam.incertaesedis.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-4.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Firmicutesfam.incertaesedis.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-5.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Firmicutesfam.incertaesedis.diag, form = df$age)
+```
+
+    ## qu = 0.25, log(sigma) = -2.845019 : outer Newton did not converge fully.
+
+    ## qu = 0.25, log(sigma) = -2.749399 : outer Newton did not converge fully.
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-6.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Firmicutesfam.incertaesedis.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-7.png)<!-- -->
+
+``` r
+testZeroInflation(glmm.Firmicutesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(glmm.Firmicutesfam.incertaesedis.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.87834, p-value = 0.48
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(glmm.Firmicutesfam.incertaesedis.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-29-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 2.7181, p-value = 0.2422
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 2)$result # sex
+```
+
+    ## $chi2
+    ##        chi2          df           P 
+    ## 8.497455405 1.000000000 0.003556435
+
+``` r
+wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 3)$result # age
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.09330206 1.00000000 0.76002051
+
+``` r
+wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 4)$result # pretreatment
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.02402493 1.00000000 0.87682149
+
+``` r
+wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 5)$result # donor
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.3843411 1.0000000 0.5352891
+
+``` r
+wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = c(6, 9, 10))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 2.7735028 3.0000000 0.4278804
+
+# Lachnospiraceae
+
+## Transform the data
+
+``` r
+hist( df$Lachnospiraceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Lachnospiraceae-1.png)<!-- -->
+
+``` r
+df$Lachnospiraceae.new = asin( sqrt( df$Lachnospiraceae ))
+hist( df$Lachnospiraceae.new )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Lachnospiraceae-2.png)<!-- -->
+
+``` r
+sum( df$Lachnospiraceae.new == 0 ) / length( df$Lachnospiraceae.new ) # proportion of zeros
+```
+
+    ## [1] 0.01111111
+
+``` r
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Lachnospiraceae
+
+``` r
+a = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Lachnospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "right", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Lachnospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+
+Lachnospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Lachnospiraceae.plot
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Lachnospiraceae-1.png)<!-- -->
+
+## Choose between the lmer and glmmTMB models Lachnospiraceae
+
+We have used time as a numeric value and added a spline at knots = 7.
+
+``` r
+lme.int.Lachnospiraceae = lmer( Lachnospiraceae.new~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), data = df )
+
+# lme.slope.Lachnospiraceaee = lmer( Lachnospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ),data = df )
+
+glmm.int.Lachnospiraceae = glmmTMB( Lachnospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+               family = gaussian, 
+               data = df, 
+               zi = ~ 1,
+               REML = TRUE )
+
+# glmm.slope.Lachnospiraceae = glmmTMB( Lachnospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
+               #family = gaussian, 
+               #data = df, 
+               #zi = ~ 1,
+               #REML = TRUE )
+
+AICc( lme.int.Lachnospiraceae ) # lower
+```
+
+    ## [1] -248.4765
+
+``` r
+AICc( glmm.int.Lachnospiraceae )
+```
+
+    ## [1] -246.1519
+
+# Diagnostics Lachnospiraceae
+
+``` r
+lme.Lachnospiraceae.diag = DHARMa::simulateResiduals( lme.int.Lachnospiraceae )
+plot( lme.Lachnospiraceae.diag )
+
+plotResiduals( lme.Lachnospiraceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( lme.Lachnospiraceae.diag, form = df$timepoint.new )
+plotResiduals( lme.Lachnospiraceae.diag, form = df$treated_with_donor )
+plotResiduals( lme.Lachnospiraceae.diag, form = df$sex ) 
+plotResiduals( lme.Lachnospiraceae.diag, form = df$age )
+plotResiduals( lme.Lachnospiraceae.diag, form = df$pretreatment )
+
+testZeroInflation( lme.Lachnospiraceae.diag )
+testDispersion( lme.Lachnospiraceae.diag )
+
+output1 = recalculateResiduals( lme.Lachnospiraceae.diag, group = df$timepoint.new )
+testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
+```
+
+LMM was chosen due to its lower AICc value compared to ZIGMM as well as
+its adequate diagnostics.
+
+``` r
+plot_summs( lme.int.Lachnospiraceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Lachnospiraceae-1.png)<!-- -->
+
+``` r
+wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 2 )$result # sex
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 3.55444847 1.00000000 0.05938604
+
+``` r
+wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 3 )$result # age
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.01468133 1.00000000 0.90355912
+
+``` r
+wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 4 )$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.2188204 1.0000000 0.6399402
+
+``` r
+wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 5 )$result # donor
+```
+
+    ## $chi2
+    ##     chi2       df        P 
+    ## 0.115300 1.000000 0.734189
+
+``` r
+wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
+```
+
+    ## $chi2
+    ##        chi2          df           P 
+    ## 10.66533649  3.00000000  0.01368026
+
+# Oscillospiraceae
+
+## Transform the data
+
+``` r
+hist( df$Oscillospiraceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Oscillospiraceae-1.png)<!-- -->
+
+``` r
+df$Oscillospiraceae.new = asin( sqrt( df$Oscillospiraceae ))
+hist( df$Oscillospiraceae.new )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Oscillospiraceae-2.png)<!-- -->
+
+``` r
+sum( df$Oscillospiraceae.new == 0 ) / length( df$Oscillospiraceae.new ) # proportion of zeros
+```
+
+    ## [1] 0.1
+
+``` r
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Oscillospiraceae
+
+``` r
+a = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Oscillospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "right", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+
+Oscillospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Oscillospiraceae.plot
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Oscillospiraceae-1.png)<!-- -->
+
+## Choose between the lmer and glmmTMB models Oscillospiraceae
+
+We have used time as a numeric value and added a spline at knots = 7.
+
+``` r
+lme.int.Oscillospiraceae = lme( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
+               data = df, 
+               random = ~ 1 | subject_id )
+
+# lme.slope.Oscillospiraceae = lme( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
+               #data = df, 
+               #random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
+
+glmm.int.Oscillospiraceae = glmmTMB( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ 1 )
+
+#glmm.slope.Oscillospiraceae. = glmmTMB( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ 1 )
+
+AICc( lme.int.Oscillospiraceae )
+```
+
+    ## [1] -399.2128
+
+``` r
+AICc( glmm.int.Oscillospiraceae ) # lower
+```
+
+    ## [1] -459.8495
+
+# Diagnostics Oscillospiraceae
+
+``` r
+lmer.int.Oscillospiraceae = lmer(Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+lme.Oscillospiraceae.diag = DHARMa::simulateResiduals( lmer.int.Oscillospiraceae )
+plot( lme.Oscillospiraceae.diag )
+
+plotResiduals( lme.Oscillospiraceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$timepoint.new )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$treated_with_donor )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$sex ) 
+plotResiduals( lme.Oscillospiraceae.diag, form = df$age )
+plotResiduals( lme.Oscillospiraceae.diag, form = df$pretreatment )
+
+testZeroInflation( lme.Oscillospiraceae.diag )
+testDispersion( lme.Oscillospiraceae.diag )
+
+output1 = recalculateResiduals( lme.Oscillospiraceae.diag, group = df$timepoint.new )
+testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
+```
+
+LMM was chosen due to better diagnostics than ZIGMM despite ZIGMM having
+a lower AICc value.
+
+``` r
+plot_summs( lme.int.Oscillospiraceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Oscillospiraceae-1.png)<!-- -->
+
+``` r
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 2 )$result # sex
+```
+
+    ## $chi2
+    ##     chi2       df        P 
+    ## 0.549351 1.000000 0.458583
+
+``` r
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 3 )$result # age
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 2.2284132 1.0000000 0.1354929
+
+``` r
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 4 )$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.3570830 1.0000000 0.5501307
+
+``` r
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 5 )$result # donor
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.4209052 1.0000000 0.2332545
+
+``` r
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 9.89128300 3.00000000 0.01951324
+
+# Prevotellaceae
+
+## Transform the data
+
+``` r
+hist( df$Prevotellaceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Prevotellaceae-1.png)<!-- -->
+
+``` r
+df$Prevotellaceae.new = asin( sqrt( df$Prevotellaceae ))
+hist( df$Prevotellaceae.new )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Prevotellaceae-2.png)<!-- -->
+
+``` r
+sum( df$Prevotellaceae.new == 0 ) / length( df$Prevotellaceae.new ) # proportion of zeros
+```
+
+    ## [1] 0.3611111
+
+``` r
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Prevotellaceae
+
+``` r
+a = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Prevotellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "right", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Prevotellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+
+Prevotellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Prevotellaceae.plot
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Prevotellaceae-1.png)<!-- -->
+
+## Choose between the lmer and glmmTMB models Prevotellaceae
+
+We have used time as a numeric value and added a spline at knots = 7.
+
+``` r
+lme.int.Prevotellaceae = lmer( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), data = df )
+
+# lme.slope.Prevotellaceae = lmer( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), data = df )
+
+glmm.int.Prevotellaceae = glmmTMB( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+               family = gaussian, 
+               data = df, 
+               zi = ~ 1,
+               REML = TRUE )
+
+# glmm.slope.Prevotellaceae = glmmTMB( Prevotellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
+               #family = gaussian, 
+               #data = df, 
+               #zi = ~ 1,
+               #REML = TRUE )
+
+AICc( lme.int.Prevotellaceae ) # lower
+```
+
+    ## [1] 20.47816
+
+``` r
+AICc( glmm.int.Prevotellaceae )
+```
+
+    ## [1] 22.80267
+
+# Diagnostics Prevotellaceae
+
+``` r
+lme.Prevotellaceae.diag = DHARMa::simulateResiduals( lme.int.Prevotellaceae )
+plot( lme.Prevotellaceae.diag )
+
+plotResiduals( lme.Prevotellaceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( lme.Prevotellaceae.diag, form = df$timepoint.new )
+plotResiduals( lme.Prevotellaceae.diag, form = df$treated_with_donor )
+plotResiduals( lme.Prevotellaceae.diag, form = df$sex ) 
+plotResiduals( lme.Prevotellaceae.diag, form = df$age )
+plotResiduals( lme.Prevotellaceae.diag, form = df$pretreatment )
+
+testZeroInflation( lme.Prevotellaceae.diag )
+testDispersion( lme.Prevotellaceae.diag )
+
+output1 = recalculateResiduals( lme.Prevotellaceae.diag, group = df$timepoint.new )
+testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
+```
+
+As there were no major differences in diagnostics between LMM and ZIGMM,
+the LMM model was chosen due to its lower AICc value.
+
+``` r
+plot_summs( lme.int.Prevotellaceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Prevotellaceae-1.png)<!-- -->
+
+``` r
+wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 2 )$result # sex
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 1.5899848 1.0000000 0.2073283
+
+``` r
+wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 3 )$result # age
+```
+
+    ## $chi2
+    ##     chi2       df        P 
+    ## 1.089428 1.000000 0.296598
+
+``` r
+wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 4 )$result # pretreatment
+```
+
+    ## $chi2
+    ##        chi2          df           P 
+    ## 0.008037087 1.000000000 0.928565509
+
+``` r
+wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 5 )$result # donor
+```
+
+    ## $chi2
+    ##     chi2       df        P 
+    ## 0.305256 1.000000 0.580606
+
+``` r
+wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
+```
+
+    ## $chi2
+    ##        chi2          df           P 
+    ## 13.39249451  3.00000000  0.00386031
+
+# Rikenellaceae
+
+## Transform the data
+
+``` r
+hist( df$Rikenellaceae )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Rikenellaceae-1.png)<!-- -->
+
+``` r
+df$Rikenellaceae.new = asin( sqrt( df$Rikenellaceae ))
+hist( df$Rikenellaceae.new )
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Rikenellaceae-2.png)<!-- -->
+
+``` r
+sum( df$Rikenellaceae.new == 0 ) / length( df$Rikenellaceae.new ) # proportion of zeros
+```
+
+    ## [1] 0.1166667
+
+``` r
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Rikenellaceae
+
+``` r
+a = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Rikenellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "right", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
+
+Rikenellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Rikenellaceae.plot
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Rikenellaceae-1.png)<!-- -->
+
+## Choose between the lmer and glmmTMB models Rikenellaceae
+
+We have used time as a numeric value and added a spline at knots = 7.
+
+``` r
+lme.int.Rikenellaceae = lme( Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
+               data = df, 
+               random = ~ 1 | subject_id )
+
+# lme.slope.Rikenellaceae = lme( Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
+               #data = df, 
+               #random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
+
+glmm.int.Rikenellaceae = glmmTMB( Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ))
+
+#glmm.slope.Rikenellaceae = glmmTMB(Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns(timepoint.new.num, knots = 7) + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ clinical_outcome_wk14 + ns(timepoint.new.num, knots = 7) + ( 1 | subject_id))
+
+AICc( lme.int.Rikenellaceae ) 
+```
+
+    ## [1] -335.9933
+
+``` r
+AICc( glmm.int.Rikenellaceae ) # lower
+```
+
+    ## [1] -380.3248
+
+# Diagnostics Rikenellaceae
+
+``` r
+glmm.Rikenellaceae.diag = DHARMa::simulateResiduals( glmm.int.Rikenellaceae )
+plot( glmm.Rikenellaceae.diag )
+
+plotResiduals( glmm.Rikenellaceae.diag, form = df$clinical_outcome_wk14 )
+plotResiduals( glmm.Rikenellaceae.diag, form = df$timepoint.new )
+plotResiduals( glmm.Rikenellaceae.diag, form = df$treated_with_donor )
+plotResiduals( glmm.Rikenellaceae.diag, form = df$sex ) 
+plotResiduals( glmm.Rikenellaceae.diag, form = df$age )
+plotResiduals( glmm.Rikenellaceae.diag, form = df$pretreatment )
+
+testZeroInflation( glmm.Rikenellaceae.diag )
+testDispersion( glmm.Rikenellaceae.diag )
+
+output1 = recalculateResiduals( glmm.Rikenellaceae.diag, group = df$timepoint.new )
+testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
+```
+
+ZIGMM was chosen due to a lower AICc value comapred to LMM. However,
+there are problems with diagnostics with both models.
+
+``` r
+conf.int = data.frame( confint( glmm.int.Rikenellaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:21 ), ]
+
+clostridfam = broom.mixed::tidy( glmm.int.Rikenellaceae )[ , -c( 1 )]
+clostridfam = clostridfam[ -c( 11:23 ), ]
+clostridfam = clostridfam[ , -c( 1 )]
+effect = "fixed"
+
+clostridfam = data.frame( model = "Clostridiales incertaesedis", effect = effect, clostridfam, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+clostridfam = clostridfam[ , -c( 8 )]
+clostridfam = as_tibble( clostridfam )
+
+dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Rikenellaceae-1.png)<!-- -->
+
+``` r
+wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 2 )$result # sex
+```
+
+    ## $chi2
+    ##         chi2           df            P 
+    ## 1.314554e+01 1.000000e+00 2.882046e-04
+
+``` r
+wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 3 )$result # age
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 3.48853548 1.00000000 0.06179523
+
+``` r
+wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 4 )$result # pretreatment
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 0.08056699 1.00000000 0.77653050
+
+``` r
+wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 5 )$result # donor
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 4.31030455 1.00000000 0.03788218
+
+``` r
+wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 4.9318040 3.0000000 0.1768594
+
 # Ruminococcaceae
 
 ## Transform the data
@@ -584,7 +2635,7 @@ wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]]
 hist( df$Ruminococcaceae )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Ruminococcaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Ruminococcaceae-1.png)<!-- -->
 
 ``` r
 # No transformation needed
@@ -628,7 +2679,7 @@ Ruminococcaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
 Ruminococcaceae.plot
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Ruminococcaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Ruminococcaceae-1.png)<!-- -->
 
 ## Choose between the lmer and glmmTMB models Ruminococcaceae
 
@@ -788,15 +2839,7 @@ LMM was chosen due to its lower AICc value and adequate diagnostics.
 plot_summs( lme.int.Ruminococcaceae )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Ruminococcaceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
-```
-
-    ## $chi2
-    ##        chi2          df           P 
-    ## 11.12211779  3.00000000  0.01108354
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Ruminococcaceae-1.png)<!-- -->
 
 ``` r
 wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = 2 )$result # sex
@@ -830,832 +2873,288 @@ wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococ
     ##      chi2        df         P 
     ## 0.7680893 1.0000000 0.3808088
 
-# Rikenellaceae
-
-## Transform the data
-
 ``` r
-hist( df$Rikenellaceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Rikenellaceae-1.png)<!-- -->
-
-``` r
-df$Rikenellaceae.new = asin( sqrt( df$Rikenellaceae ))
-hist( df$Rikenellaceae.new )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Rikenellaceae-2.png)<!-- -->
-
-``` r
-sum( df$Rikenellaceae.new == 0 ) / length( df$Rikenellaceae.new ) # proportion of zeros
-```
-
-    ## [1] 0.1166667
-
-``` r
-# None responders
-df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
-
-# Good responders
-df.good = subset( df, clinical_outcome_wk14 == "Good" )
-```
-
-## Plot Rikenellaceae
-
-``` r
-a = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Rikenellaceae", 
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
-           },
-           key = list( space = "right", 
-                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
-                      text = list( c( "Non-Responders", "Responders" ))))
-
-b = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
-           })
-
-c = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
-
-d = xyplot( Rikenellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
-
-Rikenellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Rikenellaceae.plot
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Rikenellaceae-1.png)<!-- -->
-
-## Choose between the lmer and glmmTMB models Rikenellaceae
-
-We have used time as a numeric value and added a spline at knots = 7.
-
-``` r
-lme.int.Rikenellaceae = lme( Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
-               data = df, 
-               random = ~ 1 | subject_id )
-
-# lme.slope.Rikenellaceae = lme( Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
-               #data = df, 
-               #random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
-
-glmm.int.Rikenellaceae = glmmTMB( Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
-               family = gaussian, 
-               data = df, 
-               zi= ~ clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ))
-
-#glmm.slope.Rikenellaceae = glmmTMB(Rikenellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns(timepoint.new.num, knots = 7) + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
-               #family = gaussian, 
-               #data = df, 
-               #zi= ~ clinical_outcome_wk14 + ns(timepoint.new.num, knots = 7) + ( 1 | subject_id))
-
-AICc( lme.int.Rikenellaceae ) 
-```
-
-    ## [1] -335.9933
-
-``` r
-AICc( glmm.int.Rikenellaceae ) # lower
-```
-
-    ## [1] -380.3248
-
-# Diagnostics Rikenellaceae
-
-``` r
-glmm.Rikenellaceae.diag = DHARMa::simulateResiduals( glmm.int.Rikenellaceae )
-plot( glmm.Rikenellaceae.diag )
-
-plotResiduals( glmm.Rikenellaceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( glmm.Rikenellaceae.diag, form = df$timepoint.new )
-plotResiduals( glmm.Rikenellaceae.diag, form = df$treated_with_donor )
-plotResiduals( glmm.Rikenellaceae.diag, form = df$sex ) 
-plotResiduals( glmm.Rikenellaceae.diag, form = df$age )
-plotResiduals( glmm.Rikenellaceae.diag, form = df$pretreatment )
-
-testZeroInflation( glmm.Rikenellaceae.diag )
-testDispersion( glmm.Rikenellaceae.diag )
-
-output1 = recalculateResiduals( glmm.Rikenellaceae.diag, group = df$timepoint.new )
-testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
-```
-
-ZIGMM was chosen due to a lower AICc value comapred to LMM. However,
-there are problems with diagnostics with both models.
-
-``` r
-conf.int = data.frame( confint( glmm.int.Rikenellaceae ))
-colnames( conf.int )[ 1 ] = "conf.low"
-colnames( conf.int )[ 2 ] = "conf.high"
-conf.int = conf.int[ -c( 11:21 ), ]
-
-clostridfam = broom.mixed::tidy( glmm.int.Rikenellaceae )[ , -c( 1 )]
-clostridfam = clostridfam[ -c( 11:23 ), ]
-clostridfam = clostridfam[ , -c( 1 )]
-effect = "fixed"
-
-clostridfam = data.frame( model = "Clostridiales incertaesedis", effect = effect, clostridfam, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
-clostridfam = clostridfam[ , -c( 8 )]
-clostridfam = as_tibble( clostridfam )
-
-dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Rikenellaceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 4.9318040 3.0000000 0.1768594
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 2 )$result # sex
-```
-
-    ## $chi2
-    ##         chi2           df            P 
-    ## 1.314554e+01 1.000000e+00 2.882046e-04
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 3 )$result # age
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 3.48853548 1.00000000 0.06179523
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 4 )$result # pretreatment
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 0.08056699 1.00000000 0.77653050
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 5 )$result # donor
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 4.31030455 1.00000000 0.03788218
-
-# Clostridiaceae
-
-## Transform the data
-
-``` r
-hist( df$Clostridiaceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Clostridiaceae-1.png)<!-- -->
-
-``` r
-df$Clostridiaceae.new = asin( sqrt( df$Clostridiaceae ))
-hist( df$Clostridiaceae.new )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Clostridiaceae-2.png)<!-- -->
-
-``` r
-sum( df$Clostridiaceae.new == 0 ) / length( df$Clostridiaceae.new ) # proportion of zeros
-```
-
-    ## [1] 0.01666667
-
-``` r
-# None responders
-df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
-
-# Good responders
-df.good = subset( df, clinical_outcome_wk14 == "Good" )
-```
-
-## Plot Clostridiaceae
-
-``` r
-a = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Clostridiaceae", 
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
-           },
-           key = list( space = "right", 
-                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
-                      text = list( c( "Non-Responders", "Responders" ))))
-
-b = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
-           })
-
-c = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
-
-d = xyplot( Clostridiaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
-
-Clostridiaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Clostridiaceae.plot
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Clostridiaceae-1.png)<!-- -->
-
-## Choose between the lmer and glmmTMB models Clostridiaceae
-
-We have used time as a numeric value and added a spline at knots = 7.
-
-``` r
-lme.int.Clostridiaceae = lme( Clostridiaceae.new~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
-               data = df, 
-               random = ~ 1 | subject_id )
-
-# lme.slope.Clostridiaceae = lme( Clostridiaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
-              # data = df, 
-              # random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
-
-glmm.int.Clostridiaceae = glmmTMB( Clostridiaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
-               family = gaussian, 
-               data = df, 
-               zi= ~ 1 )
-
-# glmm.slope.Clostridiaceae = glmmTMB( Clostridiaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns(timepoint.new.num, knots = 7 ) | subject_id ), 
-               # family = gaussian, 
-               # data = df, 
-               # zi= ~ 1 )
-
-AICc( lme.int.Clostridiaceae )
-```
-
-    ## [1] -373.0101
-
-``` r
-AICc( glmm.int.Clostridiaceae ) # lower
-```
-
-    ## [1] -431.8529
-
-# Diagnostics Clostridiaceae
-
-``` r
-glmm.Clostridiaceae.diag = DHARMa::simulateResiduals( glmm.int.Clostridiaceae )
-plot( glmm.Clostridiaceae.diag )
-
-plotResiduals( glmm.Clostridiaceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( glmm.Clostridiaceae.diag, form = df$timepoint.new )
-plotResiduals( glmm.Clostridiaceae.diag, form = df$treated_with_donor )
-plotResiduals( glmm.Clostridiaceae.diag, form = df$sex ) 
-plotResiduals( glmm.Clostridiaceae.diag, form = df$age )
-plotResiduals( glmm.Clostridiaceae.diag, form = df$pretreatment )
-
-testZeroInflation( glmm.Clostridiaceae.diag )
-testDispersion( glmm.Clostridiaceae.diag )
-
-output1 = recalculateResiduals( glmm.Clostridiaceae.diag, group = df$timepoint.new )
-testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
-```
-
-ZIGMM model had a lower AICc and similar diagnostics to the LMM.
-
-``` r
-conf.int = data.frame( confint( glmm.int.Clostridiaceae ))
-colnames( conf.int )[ 1 ] = "conf.low"
-colnames( conf.int )[ 2 ] = "conf.high"
-conf.int = conf.int[ -c( 11:21 ), ]
-
-clostridfam = broom.mixed::tidy( glmm.int.Clostridiaceae )[ , -c( 1 )]
-clostridfam = clostridfam[ -c( 11:23 ), ]
-clostridfam = clostridfam[ , -c( 1 )]
-effect = "fixed"
-
-clostridfam = data.frame( model = "Clostridiales incertaesedis", effect = effect, clostridfam, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
-clostridfam = clostridfam[ , -c( 8 )]
-clostridfam = as_tibble( clostridfam )
-
-dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Clostridiaceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 2.5722695 3.0000000 0.4623718
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 2 )$result # sex
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.8705130 1.0000000 0.3508133
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 3 )$result # age
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.2743368 1.0000000 0.6004373
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 4 )$result # pretreatment
-```
-
-    ## $chi2
-    ##     chi2       df        P 
-    ## 0.284788 1.000000 0.593580
-
-``` r
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 5 )$result # donor
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.1430782 1.0000000 0.7052398
-
-# Bacteroidaceae
-
-## Transform the data
-
-``` r
-hist( df$Bacteroidaceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Bacteroidaceae-1.png)<!-- -->
-
-``` r
-df$Bacteroidaceae.new = asin( sqrt( df$Bacteroidaceae ))
-hist( df$Bacteroidaceae.new )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Bacteroidaceae-2.png)<!-- -->
-
-``` r
-sum( df$Bacteroidaceae.new == 0 ) / length( df$Bacteroidaceae.new ) # proportion of zeros
-```
-
-    ## [1] 0.02222222
-
-``` r
-# None responders
-df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
-
-# Good responders
-df.good = subset( df, clinical_outcome_wk14 == "Good" )
-```
-
-## Plot Bacteroidaceae
-
-``` r
-a = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Bacteroidaceae", 
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
-           },
-           key = list( space = "right", 
-                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
-                      text = list( c( "Non-Responders", "Responders" ))))
-
-b = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
-           })
-
-c = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
-
-d = xyplot( Bacteroidaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
-
-Bacteroidaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Bacteroidaceae.plot
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Bacteroidaceae-1.png)<!-- -->
-
-## Choose between the lmer and glmmTMB models Bacteroidaceae
-
-We have used time as a numeric value and added a spline at knots = 7.
-
-``` r
-lme.int.Bacteroidaceae = lme4::lmer(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
-
-#lme.int.Bacteroidaceae = lme4::lmer(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
-
-glmm.int.Bacteroidaceae = glmmTMB(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
-               family = gaussian, 
-               data = df, 
-               zi= ~ 1) 
-
-#glmm.slope.Bacteroidaceae = glmmTMB(Bacteroidaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
-               #family = gaussian, 
-               #data = df, 
-               #zi= ~ 1) 
-
-AICc(lme.int.Bacteroidaceae)
-```
-
-    ## [1] -274.0412
-
-``` r
-AICc(glmm.int.Bacteroidaceae) # lower
-```
-
-    ## [1] -328.5049
-
-# Diagnostics Bacteroidaceae
-
-``` r
-lme.Bacteroidaceae.diag = DHARMa::simulateResiduals( lme.int.Bacteroidaceae )
-plot( lme.Bacteroidaceae.diag )
-
-plotResiduals( lme.Bacteroidaceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( lme.Bacteroidaceae.diag, form = df$timepoint.new )
-plotResiduals( lme.Bacteroidaceae.diag, form = df$treated_with_donor )
-plotResiduals( lme.Bacteroidaceae.diag, form = df$sex ) 
-plotResiduals( lme.Bacteroidaceae.diag, form = df$age )
-plotResiduals( lme.Bacteroidaceae.diag, form = df$pretreatment )
-
-testZeroInflation( lme.Bacteroidaceae.diag )
-testDispersion( lme.Bacteroidaceae.diag )
-
-output1 = recalculateResiduals( lme.Bacteroidaceae.diag, group = df$timepoint.new )
-testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
-```
-
-LMM model was chosen due to slightly better diagnostics.
-
-``` r
-plot_summs( lme.int.Bacteroidaceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Bacteroidaceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 7.72418680 3.00000000 0.05206948
-
-``` r
-wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 2 )$result # sex
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 1.2508746 1.0000000 0.2633855
-
-``` r
-wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 3 )$result # age
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.2390284 1.0000000 0.6249087
-
-``` r
-wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 4 )$result # pretreatment
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 1.0103796 1.0000000 0.3148119
-
-``` r
-wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 5 )$result # donor
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 0.08342805 1.00000000 0.77270448
-
-# Oscillospiraceae
-
-## Transform the data
-
-``` r
-hist( df$Oscillospiraceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Oscillospiraceae-1.png)<!-- -->
-
-``` r
-df$Oscillospiraceae.new = asin( sqrt( df$Oscillospiraceae ))
-hist( df$Oscillospiraceae.new )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Oscillospiraceae-2.png)<!-- -->
-
-``` r
-sum( df$Oscillospiraceae.new == 0 ) / length( df$Oscillospiraceae.new ) # proportion of zeros
-```
-
-    ## [1] 0.1
-
-``` r
-# None responders
-df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
-
-# Good responders
-df.good = subset( df, clinical_outcome_wk14 == "Good" )
-```
-
-## Plot Oscillospiraceae
-
-``` r
-a = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Oscillospiraceae", 
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
-           },
-           key = list( space = "right", 
-                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
-                      text = list( c( "Non-Responders", "Responders" ))))
-
-b = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
-           })
-
-c = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
-
-d = xyplot( Oscillospiraceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
-
-Oscillospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Oscillospiraceae.plot
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Oscillospiraceae-1.png)<!-- -->
-
-## Choose between the lmer and glmmTMB models Oscillospiraceae
-
-We have used time as a numeric value and added a spline at knots = 7.
-
-``` r
-lme.int.Oscillospiraceae = lme( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
-               data = df, 
-               random = ~ 1 | subject_id )
-
-# lme.slope.Oscillospiraceae = lme( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7), 
-               #data = df, 
-               #random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
-
-glmm.int.Oscillospiraceae = glmmTMB( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
-               family = gaussian, 
-               data = df, 
-               zi= ~ 1 )
-
-#glmm.slope.Oscillospiraceae. = glmmTMB( Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 + ns( timepoint.new.num, knots = 7 ) + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( ns( timepoint.new.num, knots = 7 ) | subject_id ), 
-               #family = gaussian, 
-               #data = df, 
-               #zi= ~ 1 )
-
-AICc( lme.int.Oscillospiraceae )
-```
-
-    ## [1] -399.2128
-
-``` r
-AICc( glmm.int.Oscillospiraceae ) # lower
-```
-
-    ## [1] -459.8495
-
-# Diagnostics Oscillospiraceae
-
-``` r
-lmer.int.Oscillospiraceae = lmer(Oscillospiraceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
-
-lme.Oscillospiraceae.diag = DHARMa::simulateResiduals( lmer.int.Oscillospiraceae )
-plot( lme.Oscillospiraceae.diag )
-
-plotResiduals( lme.Oscillospiraceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( lme.Oscillospiraceae.diag, form = df$timepoint.new )
-plotResiduals( lme.Oscillospiraceae.diag, form = df$treated_with_donor )
-plotResiduals( lme.Oscillospiraceae.diag, form = df$sex ) 
-plotResiduals( lme.Oscillospiraceae.diag, form = df$age )
-plotResiduals( lme.Oscillospiraceae.diag, form = df$pretreatment )
-
-testZeroInflation( lme.Oscillospiraceae.diag )
-testDispersion( lme.Oscillospiraceae.diag )
-
-output1 = recalculateResiduals( lme.Oscillospiraceae.diag, group = df$timepoint.new )
-testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
-```
-
-LMM was chosen due to better diagnostics than ZIGMM despite ZIGMM having
-a lower AICc value.
-
-``` r
-plot_summs( lme.int.Oscillospiraceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Oscillospiraceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 9.89128300 3.00000000 0.01951324
-
-``` r
-wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 2 )$result # sex
-```
-
-    ## $chi2
-    ##     chi2       df        P 
-    ## 0.549351 1.000000 0.458583
-
-``` r
-wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 3 )$result # age
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 2.2284132 1.0000000 0.1354929
-
-``` r
-wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 4 )$result # pretreatment
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 0.3570830 1.0000000 0.5501307
-
-``` r
-wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 5 )$result # donor
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 1.4209052 1.0000000 0.2332545
-
-# Eggerthellaceae
-
-## Transform the data
-
-``` r
-hist( df$Eggerthellaceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Eggerthellaceae-1.png)<!-- -->
-
-``` r
-df$Eggerthellaceae.new = asin( sqrt( df$Eggerthellaceae ))
-hist( df$Eggerthellaceae.new )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Eggerthellaceae-2.png)<!-- -->
-
-``` r
-sum( df$Eggerthellaceae.new == 0 ) / length( df$Eggerthellaceae.new ) # proportion of zeros
-```
-
-    ## [1] 0.2666667
-
-``` r
-# None responders
-df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
-
-# Good responders
-df.good = subset( df, clinical_outcome_wk14 == "Good" )
-```
-
-## Plot Eggerthellaceae
-
-``` r
-a = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, xlab = "Timepoint", ylab = "Relative abundance (transformed)", main="Eggerthellaceae", 
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
-           },
-           key = list( space = "right", 
-                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
-                      text = list( c( "Non-Responders", "Responders" ))))
-
-b = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, xlab = "Timepoint",
-           panel = function( x, y ) {
-             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
-           })
-
-c = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.none, type = "p", col = "#EC7063" )
-
-d = xyplot( Eggerthellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df.good, type = "p", col = "#82E0AA" )
-
-Eggerthellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
-Eggerthellaceae.plot
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Eggerthellaceae-1.png)<!-- -->
-
-## Choose between the lmer and glmmTMB models Eggerthellaceae
-
-We have used time as a numeric value and added a spline at knots = 7.
-
-``` r
-lme.int.Eggerthellaceae = lme( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
-               data = df, 
-               random = ~ 1 | subject_id )
-
-# lme.slope.Eggerthellaceae = lme( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ), 
-               # data = df, 
-               # random = ~ ns( timepoint.new.num, knots = 7 ) | subject_id )
-
-glmm.int.Eggerthellaceae = glmmTMB( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7 ) + ( 1 | subject_id ), 
-               family = gaussian, 
-               data = df, 
-               zi = ~ 1,
-               REML = TRUE )
-
-# glmm.slope.Eggerthellaceae = glmmTMB( Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns( timepoint.new.num, knots = 7) + ( ns( timepoint.new, knots = 7 ) | subject_id ), 
-               # family = gaussian, 
-               # data = df, 
-               # zi = ~ 1,
-               # REML = TRUE )
-
-AICc( lme.int.Eggerthellaceae ) # lower
-```
-
-    ## [1] -628.8264
-
-``` r
-AICc( glmm.int.Eggerthellaceae )
-```
-
-    ## [1] -626.5019
-
-# Diagnostics Eggerthellaceae
-
-``` r
-lmer.int.Eggerthellaceae = lmer(Eggerthellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
-
-lme.Eggerthellaceae.diag = DHARMa::simulateResiduals( lmer.int.Eggerthellaceae )
-plot( lme.Eggerthellaceae.diag )
-
-plotResiduals( lme.Eggerthellaceae.diag, form = df$clinical_outcome_wk14 )
-plotResiduals( lme.Eggerthellaceae.diag, form = df$timepoint.new )
-plotResiduals( lme.Eggerthellaceae.diag, form = df$treated_with_donor )
-plotResiduals( lme.Eggerthellaceae.diag, form = df$sex ) 
-plotResiduals( lme.Eggerthellaceae.diag, form = df$age )
-plotResiduals( lme.Eggerthellaceae.diag, form = df$pretreatment )
-
-testZeroInflation( lme.Eggerthellaceae.diag )
-testDispersion( lme.Eggerthellaceae.diag )
-
-output1 = recalculateResiduals( lme.Eggerthellaceae.diag, group = df$timepoint.new )
-testTemporalAutocorrelation( output1, time = unique( df$timepoint.new ))
-```
-
-LMM was chosen due to a lower AICc and adequate diagnostics.
-
-``` r
-plot_summs( lme.int.Eggerthellaceae )
-```
-
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Eggerthellaceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
-```
-
-    ## $chi2
-    ##       chi2         df          P 
-    ## 8.35637710 3.00000000 0.03919299
-
-``` r
-wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 2 )$result # sex
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 1.2721986 1.0000000 0.2593546
-
-``` r
-wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 3 )$result # age
+wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 ```
 
     ## $chi2
     ##        chi2          df           P 
-    ## 9.594869353 1.000000000 0.001951218
+    ## 11.12211779  3.00000000  0.01108354
+
+# Sutterellaceae
 
 ``` r
-wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 4 )$result # pretreatment
+sum(df$Sutterellaceae == 0) / length(df$Sutterellaceae) 
 ```
 
-    ## $chi2
-    ##       chi2         df          P 
-    ## 0.09057705 1.00000000 0.76344483
+    ## [1] 0.07222222
 
 ``` r
-wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthellaceae ), Terms = 5 )$result # donor
+xyplot(Sutterellaceae ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Sutterellaceae", ylim = c(0, 0.05),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+
+``` r
+hist(df$Sutterellaceae)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-32-2.png)<!-- -->
+
+``` r
+df$Sutterellaceae.new = asin(sqrt(df$Sutterellaceae))
+hist(df$Sutterellaceae.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-32-3.png)<!-- -->
+
+``` r
+xyplot(Sutterellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df, xlab = "Timepoint", ylab = "Sutterellaceae", ylim = c(0, 0.2),
+           panel = function(x, y) {
+            panel.average(x, y, horizontal = FALSE, col = "plum", lwd = 4)
+       })
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-32-4.png)<!-- -->
+
+``` r
+lme.int.Sutterellaceae = lmer(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
+
+#lme.slope.Sutterellaceae = lmer(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
+
+glmm.int.Sutterellaceae = glmmTMB(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
+               family = gaussian, 
+               data = df, 
+               zi= ~ 1)
+
+#glmm.slope.Sutterellaceae = glmmTMB(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
+               #family = gaussian, 
+               #data = df, 
+               #zi= ~ 1)
+
+AICc(lme.int.Sutterellaceae)
+```
+
+    ## [1] -448.1483
+
+``` r
+AICc(glmm.int.Sutterellaceae) # lower
+```
+
+    ## [1] -516.8995
+
+``` r
+glmm.Sutterellaceae.diag = DHARMa::simulateResiduals(glmm.int.Sutterellaceae)
+plot(glmm.Sutterellaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Sutterellaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-2.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Sutterellaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-3.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Sutterellaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-4.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Sutterellaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-5.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Sutterellaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-6.png)<!-- -->
+
+``` r
+plotResiduals(glmm.Sutterellaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-7.png)<!-- -->
+
+``` r
+testZeroInflation(glmm.Sutterellaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(glmm.Sutterellaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.99248, p-value = 0.992
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(glmm.Sutterellaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-34-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 1.4524, p-value = 0.3798
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+lme.Sutterellaceae.diag = DHARMa::simulateResiduals(lme.int.Sutterellaceae)
+plot(lme.Sutterellaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
+
+``` r
+plotResiduals(lme.Sutterellaceae.diag, form = df$clinical_outcome_wk14)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-2.png)<!-- -->
+
+``` r
+plotResiduals(lme.Sutterellaceae.diag, form = df$timepoint.new)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-3.png)<!-- -->
+
+``` r
+plotResiduals(lme.Sutterellaceae.diag, form = df$treated_with_donor)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-4.png)<!-- -->
+
+``` r
+plotResiduals(lme.Sutterellaceae.diag, form = df$sex)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-5.png)<!-- -->
+
+``` r
+plotResiduals(lme.Sutterellaceae.diag, form = df$age)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-6.png)<!-- -->
+
+``` r
+plotResiduals(lme.Sutterellaceae.diag, form = df$pretreatment)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-7.png)<!-- -->
+
+``` r
+testZeroInflation(lme.Sutterellaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-8.png)<!-- -->
+
+    ## 
+    ##  DHARMa zero-inflation test via comparison to expected zeros with
+    ##  simulation under H0 = fitted model
+    ## 
+    ## data:  simulationOutput
+    ## ratioObsSim = Inf, p-value < 2.2e-16
+    ## alternative hypothesis: two.sided
+
+``` r
+testDispersion(lme.Sutterellaceae.diag)
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-9.png)<!-- -->
+
+    ## 
+    ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    ##  simulated
+    ## 
+    ## data:  simulationOutput
+    ## dispersion = 0.89253, p-value = 0.416
+    ## alternative hypothesis: two.sided
+
+``` r
+output1 = recalculateResiduals(lme.Sutterellaceae.diag, group=df$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
+```
+
+![](Top_15_Mixed_Models_files/figure-gfm/unnamed-chunk-35-10.png)<!-- -->
+
+    ## 
+    ##  Durbin-Watson test
+    ## 
+    ## data:  simulationOutput$scaledResiduals ~ 1
+    ## DW = 1.4656, p-value = 0.3918
+    ## alternative hypothesis: true autocorrelation is not 0
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 2)$result # sex
 ```
 
     ## $chi2
     ##      chi2        df         P 
-    ## 0.3117157 1.0000000 0.5766293
+    ## 0.4550010 1.0000000 0.4999696
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 3)$result # age
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.7871152 1.0000000 0.3749738
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 4)$result # pretreatment
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 0.6540075 1.0000000 0.4186835
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 5)$result # donor
+```
+
+    ## $chi2
+    ##       chi2         df          P 
+    ## 6.90647377 1.00000000 0.00858842
+
+``` r
+wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = c(6, 9, 10))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 8.7938926 3.0000000 0.0321605
 
 # Veillonellaceae
 
@@ -1665,14 +3164,14 @@ wald.test( Sigma = vcov( lme.int.Eggerthellaceae ), b = fixef( lme.int.Eggerthel
 hist( df$Veillonellaceae )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Veillonellaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Veillonellaceae-1.png)<!-- -->
 
 ``` r
 df$Veillonellaceae.new = asin( sqrt( df$Veillonellaceae ))
 hist( df$Veillonellaceae.new )
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Histogramm%20Veillonellaceae-2.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Histogramm%20Veillonellaceae-2.png)<!-- -->
 
 ``` r
 sum( df$Veillonellaceae.new == 0 ) / length( df$Veillonellaceae.new ) # proportion of zeros
@@ -1712,7 +3211,7 @@ Veillonellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
 Veillonellaceae.plot
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Plot%20Veillonellaceae-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Plot%20Veillonellaceae-1.png)<!-- -->
 
 ## Choose between the lmer and glmmTMB models Veillonellaceae
 
@@ -1826,15 +3325,7 @@ clostridfam = as_tibble( clostridfam )
 dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Results%20Veillonellaceae-1.png)<!-- -->
-
-``` r
-wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-```
-
-    ## $chi2
-    ##      chi2        df         P 
-    ## 2.7292301 3.0000000 0.4352828
+![](Top_15_Mixed_Models_files/figure-gfm/Results%20Veillonellaceae-1.png)<!-- -->
 
 ``` r
 wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = 2 )$result # sex
@@ -1868,44 +3359,17 @@ wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( gl
     ##       chi2         df          P 
     ## 3.99328027 1.00000000 0.04568205
 
+``` r
+wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
+```
+
+    ## $chi2
+    ##      chi2        df         P 
+    ## 2.7292301 3.0000000 0.4352828
+
 # Coefficients Plot - Comparison
 
 ``` r
-# Prevotellaceae
-prevo = broom.mixed::tidy( lme.int.Prevotellaceae, conf.int = TRUE )
-prevo = prevo[ -c( 11:12 ), -c( 7:8 )]
-model = "Prevotellaceae"
-prevo = data.frame( model = model, prevo )
-prevo = as_tibble( prevo )
-
-# Lachnospiraceae
-lachno = broom.mixed::tidy( lme.int.Lachnospiraceae, conf.int = TRUE )
-lachno = lachno[ -c( 11:12 ), -c( 7:8 )]
-model = "Lachnospiraceae"
-lachno = data.frame( model = model, lachno )
-lachno = as_tibble( lachno )
-
-# Ruminococcaceae
-rumino = broom.mixed::tidy( lme.int.Ruminococcaceae, conf.int = TRUE )
-rumino = rumino[ -c( 11:12 ), -c( 6,8 )]
-model = "Ruminococcaceae"
-rumino = data.frame( model = model, rumino )
-rumino = as_tibble( rumino )
-
-# Oscillospiraceae
-oscillo = broom.mixed::tidy( lme.int.Oscillospiraceae, conf.int = TRUE )
-oscillo = oscillo[ -c( 11:12 ), -c( 6,8 )]
-model = "Oscillospiraceae"
-oscillo = data.frame( model = model, oscillo )
-oscillo = as_tibble( oscillo )
-
-# Eggerthellaceae
-eggerth = broom.mixed::tidy( lme.int.Eggerthellaceae, conf.int = TRUE )
-eggerth = eggerth[ -c( 11:12 ), -c( 6,8 )]
-model = "Eggerthellaceae"
-eggerth = data.frame( model = model, eggerth )
-eggerth = as_tibble( eggerth )
-
 # Bacteroidaceae
 bacteroid = broom.mixed::tidy( lme.int.Bacteroidaceae, conf.int = TRUE )
 bacteroid = bacteroid[ -c( 11:12 ), ]
@@ -1913,37 +3377,50 @@ model = "Bacteroidaceae"
 bacteroid = data.frame( model = model, bacteroid )
 bacteroid = as_tibble( bacteroid )
 
-# start of ZIGMM models
-
-# Rikenellaceae
-conf.int = data.frame( confint( glmm.int.Rikenellaceae ))
+# Bacteroidalesfam.incertaesedis
+conf.int = data.frame( confint( glmm.int.Bacteroidalesfam.incertaesedis ))
 colnames( conf.int )[ 1 ] = "conf.low"
 colnames( conf.int )[ 2 ] = "conf.high"
-conf.int = conf.int[ -c( 11:16 ), ]
+conf.int = conf.int[ -c( 11:21 ), ]
 
-rikenell = broom.mixed::tidy( glmm.int.Rikenellaceae )[ , -c( 1 )]
-rikenell = rikenell[ -c( 11:18 ), ]
-rikenell = rikenell[ , -c( 1 )]
+bactfam = broom.mixed::tidy( glmm.int.Bacteroidalesfam.incertaesedis )[ , -c( 1 )]
+bactfam = bactfam[ -c( 11:23 ), ]
+bactfam = bactfam[ , -c( 1 )]
 effect = "fixed"
 
-rikenell = data.frame( model = "Rikenellaceae", effect = effect, rikenell, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
-rikenell = rikenell[ , -c( 8 )]
-rikenell = as_tibble( rikenell )
+bactfam = data.frame( model = "Bacteroidalesfam.incertaesedis", effect = effect, bactfam, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+bactfam = bactfam[ , -c( 8 )]
+bactfam = as_tibble( bactfam )
 
-# Veillonellaceae
-conf.int = data.frame( confint( glmm.slope.Veillonellaceae ))
+# Bifidobacteriaceae
+conf.int = data.frame( confint( glmm.int.Bifidobacteriaceae ))
 colnames( conf.int )[ 1 ] = "conf.low"
 colnames( conf.int )[ 2 ] = "conf.high"
-conf.int = conf.int[ -c( 11:17 ), ]
+conf.int = conf.int[ -c( 11:21 ), ]
 
-veillon = broom.mixed::tidy( glmm.slope.Veillonellaceae )[ , -c( 1 )]
-veillon = veillon[ -c( 11:18 ), ]
-veillon = veillon[ , -c( 1 )]
+bifidobac = broom.mixed::tidy( glmm.int.Bifidobacteriaceae )[ , -c( 1 )]
+bifidobac = bifidobac[ -c( 11:23 ), ]
+bifidobac = bifidobac[ , -c( 1 )]
 effect = "fixed"
 
-veillon = data.frame( model = "Veillonellaceae", effect = effect, veillon, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
-veillon = veillon[ , -c( 8 )]
-veillon = as_tibble( veillon )
+bifidobac = data.frame( model = "bifidobac", effect = effect, bifidobac, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+bifidobac = bifidobac[ , -c( 8 )]
+bifidobac = as_tibble( bifidobac )
+
+# Clostridiaceae
+conf.int = data.frame( confint( glmm.int.Clostridiaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:21 ), ]
+
+clostrid = broom.mixed::tidy( glmm.int.Clostridiaceae )[ , -c( 1 )]
+clostrid = clostrid[ -c( 11:23 ), ]
+clostrid = clostrid[ , -c( 1 )]
+effect = "fixed"
+
+clostrid = data.frame( model = "Clostridiaceae", effect = effect, clostrid, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+clostrid = clostrid[ , -c( 8 )]
+clostrid = as_tibble( clostrid )
 
 # Clostridiales incertaesedis
 conf.int = data.frame( confint( glmm.slope.Clostridialesfam.incertaesedis ))
@@ -1960,27 +3437,116 @@ clostridfam = data.frame( model = "Clostridiales incertaesedis", effect = effect
 clostridfam = clostridfam[ , -c( 8 )]
 clostridfam = as_tibble( clostridfam )
 
-# Clostridiaceae
-conf.int = data.frame( confint( glmm.int.Clostridiaceae ))
+# Coriobacteriaceae
+conf.int = data.frame( confint( glmm.int.Coriobacteriaceae ))
 colnames( conf.int )[ 1 ] = "conf.low"
 colnames( conf.int )[ 2 ] = "conf.high"
 conf.int = conf.int[ -c( 11:21 ), ]
 
-clostrid = broom.mixed::tidy( glmm.int.Clostridiaceae )[ , -c( 1 )]
-clostrid = clostrid[ -c( 11:23 ), ]
-clostrid = clostrid[ , -c( 1 )]
+coriobac = broom.mixed::tidy( glmm.int.Coriobacteriaceae )[ , -c( 1 )]
+coriobac = coriobac[ -c( 11:23 ), ]
+coriobac = coriobac[ , -c( 1 )]
 effect = "fixed"
 
-clostrid = data.frame( model = "Clostridiaceae", effect = effect, clostrid, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
-clostrid = clostrid[ , -c( 8 )]
-clostrid = as_tibble( clostrid )
+coriobac = data.frame( model = "Coriobacteriaceae", effect = effect, coriobac, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+coriobac = coriobac[ , -c( 8 )]
+coriobac = as_tibble( coriobac )
+
+# Eubacteriaceae 
+eubact = broom.mixed::tidy( lme.slope.Eubacteriaceae, conf.int = TRUE )
+eubact = eubact[ -c( 11:12 ), -c( 7:8 )]
+model = "Eubacteriaceae"
+eubact = data.frame( model = model, eubact )
+eubact = as_tibble( eubact )
+
+# Firmicutesfam.incertaesedis
+firmifam = broom.mixed::tidy( lme.int.Firmicutesfam.incertaesedis, conf.int = TRUE )
+firmifam = firmifam[ -c( 11:12 ), -c( 7:8 )]
+model = "Firmicutesfam.incertaesedis"
+firmifam = data.frame( model = model, firmifam )
+firmifam = as_tibble( firmifam )
+
+# Lachnospiraceae
+lachno = broom.mixed::tidy( lme.int.Lachnospiraceae, conf.int = TRUE )
+lachno = lachno[ -c( 11:12 ), -c( 7:8 )]
+model = "Lachnospiraceae"
+lachno = data.frame( model = model, lachno )
+lachno = as_tibble( lachno )
+
+# Oscillospiraceae
+oscillo = broom.mixed::tidy( lme.int.Oscillospiraceae, conf.int = TRUE )
+oscillo = oscillo[ -c( 11:12 ), -c( 6,8 )]
+model = "Oscillospiraceae"
+oscillo = data.frame( model = model, oscillo )
+oscillo = as_tibble( oscillo )
+
+# Prevotellaceae
+prevo = broom.mixed::tidy( lme.int.Prevotellaceae, conf.int = TRUE )
+prevo = prevo[ -c( 11:12 ), -c( 7:8 )]
+model = "Prevotellaceae"
+prevo = data.frame( model = model, prevo )
+prevo = as_tibble( prevo )
+
+# Rikenellaceae
+conf.int = data.frame( confint( glmm.int.Rikenellaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:16 ), ]
+
+rikenell = broom.mixed::tidy( glmm.int.Rikenellaceae )[ , -c( 1 )]
+rikenell = rikenell[ -c( 11:18 ), ]
+rikenell = rikenell[ , -c( 1 )]
+effect = "fixed"
+
+rikenell = data.frame( model = "Rikenellaceae", effect = effect, rikenell, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+rikenell = rikenell[ , -c( 8 )]
+rikenell = as_tibble( rikenell )
+
+# Ruminococcaceae
+rumino = broom.mixed::tidy( lme.int.Ruminococcaceae, conf.int = TRUE )
+rumino = rumino[ -c( 11:12 ), -c( 6,8 )]
+model = "Ruminococcaceae"
+rumino = data.frame( model = model, rumino )
+rumino = as_tibble( rumino )
+
+# Sutterellaceae
+conf.int = data.frame( confint( glmm.int.Sutterellaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:16 ), ]
+
+sutterell = broom.mixed::tidy( glmm.int.Sutterellaceae )[ , -c( 1 )]
+sutterell = sutterell[ -c( 11:18 ), ]
+sutterell = sutterell[ , -c( 1 )]
+effect = "fixed"
+
+sutterell = data.frame( model = "Sutterellaceae", effect = effect, sutterell, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+sutterell = sutterell[ , -c( 8 )]
+sutterell = as_tibble( sutterell )
+
+# Veillonellaceae
+conf.int = data.frame( confint( glmm.slope.Veillonellaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:17 ), ]
+
+veillon = broom.mixed::tidy( glmm.slope.Veillonellaceae )[ , -c( 1 )]
+veillon = veillon[ -c( 11:18 ), ]
+veillon = veillon[ , -c( 1 )]
+effect = "fixed"
+
+veillon = data.frame( model = "Veillonellaceae", effect = effect, veillon, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+veillon = veillon[ , -c( 8 )]
+veillon = as_tibble( veillon )
 ```
 
 ``` r
 # combine
 common <- intersect( colnames( prevo ), colnames( rumino ))
-all_bacteria = rbind( prevo[ common ], lachno[ common ], rumino[ common ], clostridfam[ common ], clostrid[ common ], 
-                      rikenell[ common ], bacteroid[ common ], oscillo[ common ], eggerth[ common ], veillon[ common ] )
+all_bacteria = rbind( bacteroid[ common ], bactfam[ common ], bifidobac[ common ], clostrid[ common ], clostridfam[ common ], coriobac[ common ], eubact[ common ], firmifam[ common ], lachno[ common ], oscillo[ common ], prevo[ common ], rikenell[ common ], rumino[ common ], sutterell[ common ], veillon[ common ] )
+
+all_bacteria <- all_bacteria %>%
+  filter(effect=='fixed' )
 
 # pdf( "coefficientsplot.pdf", width = 15, height = 11 )
 # dwplot( all_bacteria, dodge_size = 0.8, dot_args = list( size = 3 ),
@@ -1989,7 +3555,7 @@ all_bacteria = rbind( prevo[ common ], lachno[ common ], rumino[ common ], clost
 dwplot( all_bacteria ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 ```
 
-![](Top_10_Mixed_Models_files/figure-gfm/Coefficient%20Plot-1.png)<!-- -->
+![](Top_15_Mixed_Models_files/figure-gfm/Coefficient%20Plot-1.png)<!-- -->
 
 ``` r
 # dev.off()

@@ -69,6 +69,9 @@ physeq_mOTU
 # Remove donors from data
 physeq_mOTU = subset_samples( physeq_mOTU, subject_id != "Donor A" )
 physeq_mOTU = subset_samples( physeq_mOTU, subject_id != "Donor B" )
+
+# make new class - Coriobacteriaceae
+physeq_mOTU = merge_taxa2(physeq_mOTU, pattern = "_Coriobacteriaceae", name = "Coriobacteriaceae")
 ```
 
 ```{r Sample data, echo=TRUE}
@@ -186,11 +189,11 @@ LMM model was chosen due to slightly better diagnostics.
 ```{r Results Bacteroidaceae}
 plot_summs( lme.int.Bacteroidaceae )
 
-wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 2 )$result # sex
 wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 3 )$result # age
 wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 4 )$result # pretreatment
 wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = 5 )$result # donor
+wald.test( Sigma = vcov( lme.int.Bacteroidaceae ), b = fixef( lme.int.Bacteroidaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 ```
 
 
@@ -218,16 +221,16 @@ xyplot(Bacteroidalesfam.incertaesedis.new ~ timepoint.new | clinical_outcome_wk1
 ```
 
 ```{r}
-lme.int.Bacteroidalesfam.incertaesedis = lmer(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), data = df)
+lme.int.Bacteroidalesfam.incertaesedis = lmer(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
 
-#lme.slope.Bacteroidalesfam.incertaesedis = lmer(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), data = df)
+#lme.slope.Bacteroidalesfam.incertaesedis = lmer(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-glmm.int.Bacteroidalesfam.incertaesedis = glmmTMB(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), 
+glmm.int.Bacteroidalesfam.incertaesedis = glmmTMB(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
                zi= ~ clinical_outcome_wk14)
 
-#glmm.slope.Bacteroidalesfam.incertaesedis = glmmTMB(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+#glmm.slope.Bacteroidalesfam.incertaesedis = glmmTMB(Bacteroidalesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
                #zi= ~ clinical_outcome_wk14) 
@@ -275,8 +278,6 @@ testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
 ```
 
 ```{r}
-wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = c(6, 9, 10))$result
-
 wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 2)$result # sex
 
 wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 3)$result # age
@@ -284,6 +285,8 @@ wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = f
 wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 4)$result # pretreatment
 
 wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], b = fixef(glmm.int.Bacteroidalesfam.incertaesedis)[["cond"]], Terms = c(6, 9, 10))$result
 ```
 
 # Bifidobacteriaceae
@@ -310,16 +313,16 @@ xyplot(Bifidobacteriaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df
 ```
 
 ```{r}
-lme.int.Bifidobacteriaceae = lmer(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), data = df)
+lme.int.Bifidobacteriaceae = lmer(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
 
-#lme.slope.Bifidobacteriaceae = lmer(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), data = df)
+#lme.slope.Bifidobacteriaceae = lmer(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-glmm.int.Bifidobacteriaceae = glmmTMB(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), 
+glmm.int.Bifidobacteriaceae = glmmTMB(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
                zi= ~ 1)
 
-#glmm.slope.Bifidobacteriaceae = glmmTMB(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+#glmm.slope.Bifidobacteriaceae = glmmTMB(Bifidobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
                #zi= ~ 1) 
@@ -367,8 +370,6 @@ testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
 ```
 
 ```{r}
-wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = c(6, 9, 10))$result
-
 wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 2)$result # sex
 
 wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 3)$result # age
@@ -376,6 +377,8 @@ wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.in
 wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 4)$result # pretreatment
 
 wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(glmm.int.Bifidobacteriaceae)[["cond"]], b = fixef(glmm.int.Bifidobacteriaceae)[["cond"]], Terms = c(6, 9, 10))$result
 ```
 
 
@@ -490,16 +493,6 @@ clostridfam = clostridfam[ , -c( 8 )]
 clostridfam = as_tibble( clostridfam )
 
 dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
-
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 2 )$result # sex
-
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 3 )$result # age
-
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 4 )$result # pretreatment
-
-wald.test( Sigma = vcov( glmm.int.Clostridiaceae )[[ "cond" ]], b = fixef( glmm.int.Clostridiaceae )[[ "cond" ]], Terms = 5 )$result # donor
 ```
 
 
@@ -616,8 +609,6 @@ clostridfam = as_tibble( clostridfam )
 
 dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 
-wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-
 wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = 2 )$result # sex
 
 wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = 3 )$result # age
@@ -625,6 +616,8 @@ wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]]
 wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = 4 )$result # pretreatment
 
 wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = 5 )$result # donor
+
+wald.test( Sigma = vcov( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], b = fixef( glmm.slope.Clostridialesfam.incertaesedis )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
 ```
 
 # Coriobacteriaceae
@@ -651,16 +644,16 @@ xyplot(Coriobacteriaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df,
 ```
 
 ```{r}
-lme.int.Coriobacteriaceae = lmer(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), data = df)
+lme.int.Coriobacteriaceae = lmer(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
 
-#lme.slope.Coriobacteriaceae = lmer(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), data = df)
+#lme.slope.Coriobacteriaceae = lmer(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-glmm.int.Coriobacteriaceae = glmmTMB(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), 
+glmm.int.Coriobacteriaceae = glmmTMB(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
                zi= ~ 1)
 
-#glmm.slope.Coriobacteriaceae = glmmTMB(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+#glmm.slope.Coriobacteriaceae = glmmTMB(Coriobacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
                #zi= ~ 1) 
@@ -708,8 +701,6 @@ testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
 ```
 
 ```{r}
-wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = c(6, 9, 10))$result
-
 wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 2)$result # sex
 
 wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 3)$result # age
@@ -717,6 +708,8 @@ wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int
 wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 4)$result # pretreatment
 
 wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(glmm.int.Coriobacteriaceae)[["cond"]], b = fixef(glmm.int.Coriobacteriaceae)[["cond"]], Terms = c(6, 9, 10))$result
 ```
 
 # Eubacteriaceae 
@@ -744,27 +737,27 @@ xyplot(Eubacteriaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df, xl
 ```{r}
 library(nlme)
 
-lme.int.Eubacteriaceae = lme(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+lme.int.Eubacteriaceae = lme(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7), 
                data = df, 
                random = ~ 1 | subject_id)
 
-lme.slope.Eubacteriaceae = lme(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+lme.slope.Eubacteriaceae = lme(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7), 
                data = df, 
-               random = ~ ns(timepoint.new, knots = 7) | subject_id)
+               random = ~ ns(timepoint.new.num, knots = 7) | subject_id)
 
 anova_results = anova(lme.int.Eubacteriaceae, lme.slope.Eubacteriaceae)
 mixtureLRT = anova_results[["L.Ratio"]][2]
 0.5 * pchisq(mixtureLRT, 1, lower.tail = FALSE) + 0.5 * pchisq(mixtureLRT, 2, lower.tail = FALSE) # use random-slopes
 
-glmm.int.Eubacteriaceae = glmmTMB(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), 
+glmm.int.Eubacteriaceae = glmmTMB(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
                zi = ~ 1,
                REML = TRUE)
 
-lme.slope.Eubacteriaceae = lmer(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), data = df)
+lme.slope.Eubacteriaceae = lmer(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-#glmm.slope.Eubacteriaceae = glmmTMB(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+#glmm.slope.Eubacteriaceae = glmmTMB(Eubacteriaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
                #zi = ~ 1,
@@ -812,8 +805,6 @@ output1 = recalculateResiduals(glmm.Eubacteriaceae.diag, group=df$timepoint.new)
 testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
 ```
 ```{r}
-wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = c(6, 9, 10))$result
-
 wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 2)$result # sex
 
 wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 3)$result # age
@@ -821,6 +812,8 @@ wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteria
 wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 4)$result # pretreatment
 
 wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(lme.slope.Eubacteriaceae), b = fixef(lme.slope.Eubacteriaceae), Terms = c(6, 9, 10))$result
 ```
 
 # Firmicutesfam.incertaesedis
@@ -846,17 +839,17 @@ xyplot(Firmicutesfam.incertaesedis ~ timepoint.new | clinical_outcome_wk14, data
 ```
 
 ```{r}
-lme.int.Firmicutesfam.incertaesedis = lmer(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), data = df)
+lme.int.Firmicutesfam.incertaesedis = lmer(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
 
-#lme.slope.Firmicutesfam.incertaesedis = lmer(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), data = df)
+#lme.slope.Firmicutesfam.incertaesedis = lmer(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-glmm.int.Firmicutesfam.incertaesedis = glmmTMB(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), 
+glmm.int.Firmicutesfam.incertaesedis = glmmTMB(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
                zi = ~ 1,
                REML = TRUE)
 
-#glmm.slope.Firmicutesfam.incertaesedis = glmmTMB(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+#glmm.slope.Firmicutesfam.incertaesedis = glmmTMB(Firmicutesfam.incertaesedis.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
                #zi = ~ clinical_outcome_wk14 + ( 1 | subject_id),
@@ -904,8 +897,6 @@ output1 = recalculateResiduals(glmm.Firmicutesfam.incertaesedis.diag, group=df$t
 testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
 ```
 ```{r}
-wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = c(6, 9, 10))$result
-
 wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 2)$result # sex
 
 wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 3)$result # age
@@ -913,6 +904,8 @@ wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.F
 wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 4)$result # pretreatment
 
 wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(lme.int.Firmicutesfam.incertaesedis), b = fixef(lme.int.Firmicutesfam.incertaesedis), Terms = c(6, 9, 10))$result
 ```
 
 # Lachnospiraceae
@@ -1011,11 +1004,11 @@ LMM was chosen due to its lower AICc value compared to ZIGMM as well as its adeq
 ```{r Results Lachnospiraceae}
 plot_summs( lme.int.Lachnospiraceae )
 
-wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 2 )$result # sex
 wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 3 )$result # age
 wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 4 )$result # pretreatment
 wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = 5 )$result # donor
+wald.test( Sigma = vcov( lme.int.Lachnospiraceae ), b = fixef( lme.int.Lachnospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 ```
 
 # Oscillospiraceae
@@ -1118,11 +1111,11 @@ LMM was chosen due to better diagnostics than ZIGMM despite ZIGMM having a lower
 ```{r Results Oscillospiraceae}
 plot_summs( lme.int.Oscillospiraceae )
 
-wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 2 )$result # sex
 wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 3 )$result # age
 wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 4 )$result # pretreatment
 wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = 5 )$result # donor
+wald.test( Sigma = vcov( lme.int.Oscillospiraceae ), b = fixef( lme.int.Oscillospiraceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 ```
 
 # Prevotellaceae
@@ -1221,11 +1214,11 @@ As there were no major differences in diagnostics between LMM and ZIGMM, the LMM
 ```{r Results Prevotellaceae}
 plot_summs( lme.int.Prevotellaceae )
 
-wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 2 )$result # sex
 wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 3 )$result # age
 wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 4 )$result # pretreatment
 wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = 5 )$result # donor
+wald.test( Sigma = vcov( lme.int.Prevotellaceae ), b = fixef( lme.int.Prevotellaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 ```
 
 # Rikenellaceae
@@ -1340,8 +1333,6 @@ clostridfam = as_tibble( clostridfam )
 
 dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 
-wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-
 wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 2 )$result # sex
 
 wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 3 )$result # age
@@ -1349,6 +1340,8 @@ wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.i
 wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 4 )$result # pretreatment
 
 wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = 5 )$result # donor
+
+wald.test( Sigma = vcov( glmm.int.Rikenellaceae )[[ "cond" ]], b = fixef( glmm.int.Rikenellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
 ```
 
 # Ruminococcaceae
@@ -1440,11 +1433,11 @@ LMM was chosen due to its lower AICc value and adequate diagnostics.
 ```{r Results Ruminococcaceae}
 plot_summs( lme.int.Ruminococcaceae )
 
-wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = 2 )$result # sex
 wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = 3 )$result # age
 wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = 4 )$result # pretreatment
 wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = 5 )$result # donor
+wald.test( Sigma = vcov( lme.int.Ruminococcaceae ), b = fixef( lme.int.Ruminococcaceae ), Terms = c( 6, 9, 10 ))$result # clinical outcome wk14
 ```
 
 
@@ -1472,16 +1465,16 @@ xyplot(Sutterellaceae.new ~ timepoint.new | clinical_outcome_wk14, data = df, xl
 ```
 
 ```{r}
-lme.int.Sutterellaceae = lmer(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), data = df)
+lme.int.Sutterellaceae = lmer(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), data = df)
 
-#lme.slope.Sutterellaceae = lmer(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), data = df)
+#lme.slope.Sutterellaceae = lmer(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), data = df)
 
-glmm.int.Sutterellaceae = glmmTMB(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id), 
+glmm.int.Sutterellaceae = glmmTMB(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (1 | subject_id), 
                family = gaussian, 
                data = df, 
                zi= ~ 1)
 
-#glmm.slope.Sutterellaceae = glmmTMB(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+#glmm.slope.Sutterellaceae = glmmTMB(Sutterellaceae.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new.num, knots = 7) + (ns(timepoint.new.num, knots = 7) | subject_id), 
                #family = gaussian, 
                #data = df, 
                #zi= ~ 1)
@@ -1526,8 +1519,6 @@ testTemporalAutocorrelation(output1, time = unique(df$timepoint.new))
 
 
 ```{r}
-wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = c(6, 9, 10))$result
-
 wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 2)$result # sex
 
 wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 3)$result # age
@@ -1535,6 +1526,8 @@ wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Su
 wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 4)$result # pretreatment
 
 wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(glmm.int.Sutterellaceae)[["cond"]], b = fixef(glmm.int.Sutterellaceae)[["cond"]], Terms = c(6, 9, 10))$result
 ```
 
 # Veillonellaceae
@@ -1661,8 +1654,6 @@ clostridfam = as_tibble( clostridfam )
 
 dwplot( clostridfam ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( legend.title = element_blank())
 
-wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
-
 wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = 2 )$result # sex
 
 wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = 3 )$result # age
@@ -1670,6 +1661,8 @@ wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( gl
 wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = 4 )$result # pretreatment
 
 wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = 5 )$result # donor
+
+wald.test( Sigma = vcov( glmm.slope.Veillonellaceae )[[ "cond" ]], b = fixef( glmm.slope.Veillonellaceae )[[ "cond" ]], Terms = c( 6, 9, 10 ))$result
 ```
 # Coefficients Plot - Comparison
 
@@ -1682,8 +1675,34 @@ bacteroid = data.frame( model = model, bacteroid )
 bacteroid = as_tibble( bacteroid )
 
 # Bacteroidalesfam.incertaesedis
+conf.int = data.frame( confint( glmm.int.Bacteroidalesfam.incertaesedis ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:21 ), ]
+
+bactfam = broom.mixed::tidy( glmm.int.Bacteroidalesfam.incertaesedis )[ , -c( 1 )]
+bactfam = bactfam[ -c( 11:23 ), ]
+bactfam = bactfam[ , -c( 1 )]
+effect = "fixed"
+
+bactfam = data.frame( model = "Bacteroidalesfam.incertaesedis", effect = effect, bactfam, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+bactfam = bactfam[ , -c( 8 )]
+bactfam = as_tibble( bactfam )
 
 # Bifidobacteriaceae
+conf.int = data.frame( confint( glmm.int.Bifidobacteriaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:21 ), ]
+
+bifidobac = broom.mixed::tidy( glmm.int.Bifidobacteriaceae )[ , -c( 1 )]
+bifidobac = bifidobac[ -c( 11:23 ), ]
+bifidobac = bifidobac[ , -c( 1 )]
+effect = "fixed"
+
+bifidobac = data.frame( model = "bifidobac", effect = effect, bifidobac, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+bifidobac = bifidobac[ , -c( 8 )]
+bifidobac = as_tibble( bifidobac )
 
 # Clostridiaceae
 conf.int = data.frame( confint( glmm.int.Clostridiaceae ))
@@ -1716,10 +1735,33 @@ clostridfam = clostridfam[ , -c( 8 )]
 clostridfam = as_tibble( clostridfam )
 
 # Coriobacteriaceae
+conf.int = data.frame( confint( glmm.int.Coriobacteriaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:21 ), ]
+
+coriobac = broom.mixed::tidy( glmm.int.Coriobacteriaceae )[ , -c( 1 )]
+coriobac = coriobac[ -c( 11:23 ), ]
+coriobac = coriobac[ , -c( 1 )]
+effect = "fixed"
+
+coriobac = data.frame( model = "Coriobacteriaceae", effect = effect, coriobac, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+coriobac = coriobac[ , -c( 8 )]
+coriobac = as_tibble( coriobac )
 
 # Eubacteriaceae 
+eubact = broom.mixed::tidy( lme.slope.Eubacteriaceae, conf.int = TRUE )
+eubact = eubact[ -c( 11:12 ), -c( 7:8 )]
+model = "Eubacteriaceae"
+eubact = data.frame( model = model, eubact )
+eubact = as_tibble( eubact )
 
 # Firmicutesfam.incertaesedis
+firmifam = broom.mixed::tidy( lme.int.Firmicutesfam.incertaesedis, conf.int = TRUE )
+firmifam = firmifam[ -c( 11:12 ), -c( 7:8 )]
+model = "Firmicutesfam.incertaesedis"
+firmifam = data.frame( model = model, firmifam )
+firmifam = as_tibble( firmifam )
 
 # Lachnospiraceae
 lachno = broom.mixed::tidy( lme.int.Lachnospiraceae, conf.int = TRUE )
@@ -1765,6 +1807,19 @@ rumino = data.frame( model = model, rumino )
 rumino = as_tibble( rumino )
 
 # Sutterellaceae
+conf.int = data.frame( confint( glmm.int.Sutterellaceae ))
+colnames( conf.int )[ 1 ] = "conf.low"
+colnames( conf.int )[ 2 ] = "conf.high"
+conf.int = conf.int[ -c( 11:16 ), ]
+
+sutterell = broom.mixed::tidy( glmm.int.Sutterellaceae )[ , -c( 1 )]
+sutterell = sutterell[ -c( 11:18 ), ]
+sutterell = sutterell[ , -c( 1 )]
+effect = "fixed"
+
+sutterell = data.frame( model = "Sutterellaceae", effect = effect, sutterell, conf.low = conf.int$conf.low, conf.high = conf.int$conf.high )
+sutterell = sutterell[ , -c( 8 )]
+sutterell = as_tibble( sutterell )
 
 # Veillonellaceae
 conf.int = data.frame( confint( glmm.slope.Veillonellaceae ))
@@ -1786,8 +1841,10 @@ veillon = as_tibble( veillon )
 ```{r Coefficient Plot, echo=TRUE, fig.width = 9, fig.height = 9}
 # combine
 common <- intersect( colnames( prevo ), colnames( rumino ))
-all_bacteria = rbind( bacteroid[ common ], clostrid[ common ], clostridfam[ common ], prevo[ common ], lachno[ common ], rumino[ common ], 
-                      rikenell[ common ], oscillo[ common ], eggerth[ common ], veillon[ common ] )
+all_bacteria = rbind( bacteroid[ common ], bactfam[ common ], bifidobac[ common ], clostrid[ common ], clostridfam[ common ], coriobac[ common ], eubact[ common ], firmifam[ common ], lachno[ common ], oscillo[ common ], prevo[ common ], rikenell[ common ], rumino[ common ], sutterell[ common ], veillon[ common ] )
+
+all_bacteria <- all_bacteria %>%
+  filter(effect=='fixed' )
 
 # pdf( "coefficientsplot.pdf", width = 15, height = 11 )
 # dwplot( all_bacteria, dodge_size = 0.8, dot_args = list( size = 3 ),
