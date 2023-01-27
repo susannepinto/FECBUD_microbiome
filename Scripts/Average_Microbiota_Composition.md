@@ -9,6 +9,8 @@ library( dplyr )
 library( magrittr )
 library( knitr )
 library( tidyverse )
+library( lattice )
+library( latticeExtra)
 ```
 
 ``` r
@@ -1079,3 +1081,470 @@ grid.arrange( patchworkGrob( plot.compositions ), left = textGrob( "Relative abu
 ```
 
 ![](Average_Microbiota_Composition_files/figure-gfm/Final%20plot%20comp-1.png)<!-- -->
+
+## Relative abundances of top 15 species over time
+
+``` r
+# Sample data
+sample.data = as.data.frame( as.matrix( temp@sam_data ))
+sample.data$timepoint.new = as.factor( sample.data$timepoint.new )
+sample.data$timepoint.new = factor( sample.data$timepoint.new, levels = c( "Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14" ))
+sample.data$timepoint.new.num = as.numeric( sample.data$timepoint.new )
+sample.data$clinical_outcome_wk14 = as.factor( sample.data$clinical_outcome_wk14 )
+sample.data$clinical_outcome_wk14 = factor( sample.data$clinical_outcome_wk14, levels = c( "None", "Good" ))
+
+# Abundance data
+abund = as.data.frame( as.matrix( t( temp@otu_table )))
+
+# Combine
+df = data.frame( abund, sample.data )
+colnames( df )
+```
+
+    ##  [1] "Bacteroidaceae"                 "Bacteroidalesfam.incertaesedis"
+    ##  [3] "Bifidobacteriaceae"             "Clostridiaceae"                
+    ##  [5] "Clostridialesfam.incertaesedis" "Coriobacteriaceae"             
+    ##  [7] "Eubacteriaceae"                 "Firmicutesfam.incertaesedis"   
+    ##  [9] "Lachnospiraceae"                "Oscillospiraceae"              
+    ## [11] "Prevotellaceae"                 "Rikenellaceae"                 
+    ## [13] "Ruminococcaceae"                "Sutterellaceae"                
+    ## [15] "Veillonellaceae"                "z_Other"                       
+    ## [17] "subject_id"                     "filename"                      
+    ## [19] "file_id"                        "timepoint"                     
+    ## [21] "timepoint.new"                  "sample_id.new"                 
+    ## [23] "days_offset"                    "treated_with_donor"            
+    ## [25] "age"                            "sex"                           
+    ## [27] "pretreatment"                   "clinical_outcome_wk10"         
+    ## [29] "clinical_outcome_wk14"          "raw_reads"                     
+    ## [31] "human_reads"                    "human_percentage"              
+    ## [33] "high_quality_reads"             "timepoint.new.num"
+
+``` r
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Bacteroidaceae
+
+``` r
+a = xyplot( Bacteroidaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bacteroidaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bacteroidaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bacteroidaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bacteroidaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Bacteroidaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bacteroidaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Bacteroidaceae-1.png)<!-- -->
+
+## Plot Bacteroidalesfam.incertaesedis
+
+``` r
+a = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bacteroidalesfam.incertaesedis", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Bacteroidalesfam.incertaesedis.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bacteroidalesfam.incertaesedis.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Bacteroidalesfam.incertaesedis-1.png)<!-- -->
+
+## Plot Bifidobacteriaceae
+
+``` r
+a = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bifidobacteriaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Bifidobacteriaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bifidobacteriaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Bifidobacteriaceae-1.png)<!-- -->
+
+## Plot Clostridiaceae
+
+``` r
+a = xyplot( Clostridiaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Clostridiaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Clostridiaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Clostridiaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Clostridiaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Clostridiaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Clostridiaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Clostridiaceae-1.png)<!-- -->
+
+## Plot Clostridialesfam.incertaesedis
+
+``` r
+a = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Clostridialesfam.incertaesedis", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Clostridialesfam.incertaesedis.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Clostridialesfam.incertaesedis.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Clostridialesfam.incertaesedis-1.png)<!-- -->
+
+## Plot Coriobacteriaceae
+
+``` r
+a = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Coriobacteriaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Coriobacteriaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Coriobacteriaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Coriobacteriaceae-1.png)<!-- -->
+
+## Plot Eubacteriaceae
+
+``` r
+a = xyplot( Eubacteriaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Eubacteriaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Eubacteriaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Eubacteriaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Eubacteriaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Eubacteriaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Eubacteriaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Eubacteriaceae-1.png)<!-- -->
+
+## Plot Firmicutesfam.incertaesedis
+
+``` r
+a = xyplot( Firmicutesfam.incertaesedis ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Firmicutesfam.incertaesedis", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Firmicutesfam.incertaesedis ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Firmicutesfam.incertaesedis ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Firmicutesfam.incertaesedis ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Firmicutesfam.incertaesedis.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Firmicutesfam.incertaesedis.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Firmicutesfam.incertaesedis-1.png)<!-- -->
+
+## Plot Lachnospiraceae
+
+``` r
+a = xyplot( Lachnospiraceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Lachnospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Lachnospiraceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Lachnospiraceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Lachnospiraceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Lachnospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Lachnospiraceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Lachnospiraceae-1.png)<!-- -->
+
+## Plot Oscillospiraceae
+
+``` r
+a = xyplot( Oscillospiraceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Oscillospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Oscillospiraceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Oscillospiraceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Oscillospiraceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Oscillospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Oscillospiraceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Oscillospiraceae-1.png)<!-- -->
+
+## Plot Prevotellaceae
+
+``` r
+a = xyplot( Prevotellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Prevotellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Prevotellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Prevotellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Prevotellaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Prevotellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Prevotellaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Prevotellaceae-1.png)<!-- -->
+
+## Plot Rikenellaceae
+
+``` r
+a = xyplot( Rikenellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Rikenellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Rikenellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Rikenellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Rikenellaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Rikenellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Rikenellaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Rikenellaceae-1.png)<!-- -->
+
+## Plot Ruminococcaceae
+
+``` r
+a = xyplot( Ruminococcaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Ruminococcaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Ruminococcaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Ruminococcaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Ruminococcaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Ruminococcaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Ruminococcaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Ruminococcaceae-1.png)<!-- -->
+
+## Plot Sutterellaceae
+
+``` r
+a = xyplot( Sutterellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Sutterellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Sutterellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Sutterellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Sutterellaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Sutterellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Sutterellaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Sutterellaceae-1.png)<!-- -->
+
+## Plot Veillonellaceae
+
+``` r
+a = xyplot( Veillonellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Veillonellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Veillonellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Veillonellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Veillonellaceae ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+Veillonellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Veillonellaceae.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20Veillonellaceae-1.png)<!-- -->
+
+## Plot z_Other
+
+``` r
+a = xyplot( z_Other ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Other", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#82E0AA" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( z_Other ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#82E0AA", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( z_Other ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( z_Other ~ timepoint.new, data = df.good, type = "p", col = "#82E0AA" )
+
+z_Other.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+z_Other.plot
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Plot%20z_Other-1.png)<!-- -->
+
+``` r
+grid.arrange( Bacteroidaceae.plot, Bacteroidalesfam.incertaesedis.plot, Bifidobacteriaceae.plot, Clostridiaceae.plot, Clostridialesfam.incertaesedis.plot, Coriobacteriaceae.plot, Eubacteriaceae.plot , Firmicutesfam.incertaesedis.plot, Lachnospiraceae.plot, Oscillospiraceae.plot, Prevotellaceae.plot, Rikenellaceae.plot, Ruminococcaceae.plot, Sutterellaceae.plot, Veillonellaceae.plot, z_Other.plot, ncol = 4) 
+```
+
+![](Average_Microbiota_Composition_files/figure-gfm/Final%20plot%20abuns-1.png)<!-- -->
