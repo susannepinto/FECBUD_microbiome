@@ -1,6 +1,6 @@
 ---
 title: "PCOA plot based on Aitchison distance"
-author: "S. Pinto and D. Sajbenova"
+authors: "S. Pinto and D. Sajbenova"
 date: "2023-11-12"
 output:
   github_document: default
