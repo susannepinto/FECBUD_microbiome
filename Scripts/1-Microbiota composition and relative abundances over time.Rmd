@@ -59,7 +59,7 @@ physeq_mOTU.rel
 get_taxa_unique(physeq_mOTU.rel, "family")
 
 # there was a change in family name
-# Identify the family to be changed
+# Identify the family to be changed and change the name
 family_to_change <- 'Firmicutesfam.incertaesedis'
 new_family_name <- 'Bacillotafam.incertaededis'
 
