@@ -1,0 +1,393 @@
+---
+title: "Simpson dominance"
+authors: "S. Pinto and D. Sajbenova"
+date: "2023-11-12"
+output:
+  github_document: default
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(microbiome)
+library(tidyverse)
+library(DiversitySeq)
+library(ggpubr)
+library(nlme)
+library(lattice)
+library(latticeExtra)
+library(lme4)
+library(DHARMa)
+library(splines)
+library(aod)
+```
+
+```{r}
+#physeq = readRDS( "Data/FECBUD_physeq_filt_countdata.rds" )
+#physeq.rel = microbiome::transform(physeq, "compositional")
+#physeq.rel.prune = prune_samples(! sample_sums(physeq.rel) == 0, physeq.rel)
+
+# toegevoegd
+physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_relativeabundances.rds" ) 
+physeq.rel <- physeq_mOTU
+
+physeq.rel.fam = aggregate_taxa(physeq.rel, "family")
+physeq.rel.fam
+```
+
+```{r}
+physeq.rel.fam = subset_samples(physeq.rel.fam, subject_id != "Donor A" )
+physeq.rel.fam = subset_samples(physeq.rel.fam, subject_id != "Donor B" )
+```
+
+
+```{r}
+#physeq.rel.fam = merge_taxa2(physeq.rel.fam, pattern = "_Coriobacteriaceae", name = "Coriobacteriaceae")
+
+#physeq.rel.fam@sam_data$clinical_outcome_wk14 = gsub("Partial", "None", physeq.rel.fam@sam_data$clinical_outcome_wk14)
+
+#physeq.rel.fam@sam_data$clinical_outcome_wk14 = factor(physeq.rel.fam@sam_data$clinical_outcome_wk14, levels = c("None", "Good"))
+
+#physeq.rel.fam@sam_data$clinical_outcome_wk10[49:57] = "Good"
+#physeq.rel.fam@sam_data$clinical_outcome_wk10[78:86] = "None"
+
+#physeq.rel.fam@sam_data[["timepoint.new"]] = factor(physeq.rel.fam@sam_data[["timepoint.new"]],
+#levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+#physeq.rel.fam@sam_data$pretreatment = factor(physeq.rel.fam@sam_data$pretreatment, levels = c("placebo", "budesonide"))
+```
+
+```{r}
+# tail index - considers less abundant species more than shannon
+physeq.rel.fam@sam_data$tail = aindex(physeq.rel.fam@otu_table, index = "Tail")$group1
+```
+
+```{r}
+rich.df = richness(physeq.rel.fam)$chao1
+eveness.df = evenness(physeq.rel.fam)$pielou
+dominance.df = dominance(physeq.rel.fam)$simpson
+shannon.df = alpha(physeq.rel.fam, index = "shannon") # shannon diversity
+physeq.rel.fam@sam_data$chao1 = rich.df
+physeq.rel.fam@sam_data$pielou = eveness.df
+physeq.rel.fam@sam_data$simpson = dominance.df
+physeq.rel.fam@sam_data$shannon = shannon.df
+
+df.div = as.data.frame(as.matrix(physeq.rel.fam@sam_data))
+
+df.div$timepoint.new = as.factor(df.div$timepoint.new)
+df.div$timepoint.new = factor(df.div[["timepoint.new"]],
+levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+df.div$clinical_outcome_wk14 = as.factor(df.div$clinical_outcome_wk14)
+df.div$clinical_outcome_wk14 = factor(df.div$clinical_outcome_wk14, levels = c("None", "Good"))
+df.div$age = as.numeric(df.div$age)
+df.div$treated_with_donor = as.factor(df.div$treated_with_donor)
+df.div$pretreatment = as.factor(df.div$pretreatment)
+df.div$pretreatment = factor(df.div$pretreatment, level = c("placebo", "budesonide"))
+df.div$sex = as.factor(df.div$sex)
+df.div$subject_id = factor(df.div$subject_id)
+str(df.div)
+
+df.div$chao1 = as.numeric(df.div$chao1)
+df.div$pielou = as.numeric(df.div$pielou)
+df.div$simpson = as.numeric(df.div$simpson)
+df.div$tail = as.numeric(df.div$tail)
+df.div$shannon = as.numeric(df.div$shannon)
+
+df.div$timepoint.new = as.numeric(df.div$timepoint.new)
+```
+
+# Mixed Models - Simpson Dominance
+
+```{r}
+hist(df.div$simpson)
+
+df.div$simpson.new = log(df.div$simpson) # transformation to get closer to a normal distribution
+
+hist(df.div$simpson.new)
+```
+
+```{r}
+library(nlme)
+
+# with transformation and spline
+
+# random intercepts model
+lme.int.simpson = lme(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, 
+               random = ~ 1 | subject_id)
+summary(lme.int.simpson)
+AIC(lme.int.simpson)
+
+# random slopes
+# lme.slope.simpson = lme(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+#                data = df.div, 
+#                random = ~ ns(timepoint.new, knots = 7) | subject_id)
+# 
+# summary(lme.slope.simpson)
+# AIC(lme.slope.simpson)
+```
+
+```{r confounders Simpson, echo=TRUE}
+library(lmtest)
+
+full.model = lme(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, random = ~ 1 | subject_id)
+summary(full.model )
+AIC(full.model)
+
+initial.model = lme(simpson.new ~ clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, random = ~ 1 | subject_id)
+summary(initial.model )
+AIC(initial.model)
+
+sex.model = lme(simpson.new ~ sex  + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, random = ~ 1 | subject_id)
+summary(sex.model )
+
+AIC(initial.model) - AIC(sex.model)
+lr_test.sex <- lrtest(initial.model, sex.model) # not significant
+lr_test.sex
+# Extract coefficients
+coef_initial <- coef(initial.model)
+coef_full <- coef(sex.model)
+coef_initial_sex <- coef_initial[["clinical_outcome_wk14Good"]][1]
+coef_full_sex <- coef_full[["clinical_outcome_wk14Good"]][1]
+coefficient_changes.sex  <- coef_full_sex - coef_initial_sex # 0.01124904
+coefficient_change_percentage.sex = (coef_full_sex - coef_initial_sex) / coef_initial_sex * 100
+coefficient_change_percentage.sex
+# Check collinearity
+vif_values.sex <- car::vif(sex.model)
+vif_values.sex
+
+age.model = lme(simpson.new ~ age + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, random = ~ 1 | subject_id)
+summary(age.model )
+
+AIC(initial.model) - AIC(age.model)
+lr_test.age <- lrtest(initial.model, age.model)
+lr_test.age
+# Extract coefficients
+coef_initial <- coef(initial.model)
+coef_full <- coef(age.model)
+coef_initial_age <- coef_initial[["clinical_outcome_wk14Good"]][1]
+coef_full_age <- coef_full[["clinical_outcome_wk14Good"]][1]
+coefficient_changes.age  <- coef_full_age - coef_initial_age # 0.01124904
+coefficient_change_percentage.age = (coef_full_age - coef_initial_age) / coef_initial_age * 100 
+coefficient_change_percentage.age
+# Check collinearity
+vif_values.age <- car::vif(age.model)
+vif_values.age
+
+pretreatment.model = lme(simpson.new ~ pretreatment + clinical_outcome_wk14 * ns(timepoint.new, knots = 7),  data = df.div, random = ~ 1 | subject_id)
+summary(pretreatment.model )
+
+AIC(initial.model) - AIC(pretreatment.model)
+lr_test.pretreatment <- lrtest(initial.model, pretreatment.model)
+lr_test.pretreatment
+# Extract coefficients
+coef_initial <- coef(initial.model)
+coef_full <- coef(pretreatment.model)
+coef_initial_pretreatment <- coef_initial[["clinical_outcome_wk14Good"]][1]
+coef_full_pretreatment <- coef_full[["clinical_outcome_wk14Good"]][1]
+coefficient_changes.pretreatment  <- coef_full_pretreatment - coef_initial_pretreatment # 0.01124904
+coefficient_change_percentpretreatment.pretreatment = (coef_full_pretreatment - coef_initial_pretreatment) / coef_initial_pretreatment * 100
+coefficient_change_percentpretreatment.pretreatment
+# Check collinearity
+vif_values.pretreatment <- car::vif(pretreatment.model)
+vif_values.pretreatment
+
+donor.model = lme(simpson.new ~ treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, random = ~ 1 | subject_id)
+summary(donor.model )
+
+AIC(initial.model) - AIC(donor.model)
+lr_test.treated_with_donor <- lrtest(initial.model, donor.model)
+lr_test.treated_with_donor
+# Extract coefficients
+coef_initial <- coef(initial.model)
+coef_full <- coef(donor.model)
+coef_initial_donor <- coef_initial[["clinical_outcome_wk14Good"]][1]
+coef_full_donor <- coef_full[["clinical_outcome_wk14Good"]][1]
+coefficient_changes.donor  <- coef_full_donor - coef_initial_donor # 0.01124904
+coefficient_change_percentdonor.donor = (coef_full_donor - coef_initial_donor) / coef_initial_donor * 100
+coefficient_change_percentdonor.donor
+# Check collinearity
+vif_values.treated_with_donor  <- car::vif(donor.model)
+vif_values.treated_with_donor
+
+
+## Selected model
+final.model = lme(simpson.new ~ sex  + clinical_outcome_wk14 * ns(timepoint.new, knots = 7), 
+               data = df.div, random = ~ 1 | subject_id)
+summary(final.model )
+# wald test for interaction
+wald.test(Sigma = vcov(final.model), b = fixef(final.model), Terms = c(3, 6, 7))
+
+```
+
+```{r}
+# test which model is better
+#anova_results = anova(lme.int.simpson, lme.slope.simpson)
+#mixtureLRT = anova_results[["L.Ratio"]][2]
+#0.5 * pchisq(mixtureLRT, 1, lower.tail = FALSE) + 0.5 * pchisq(mixtureLRT, 2, lower.tail = FALSE)
+# use random slopes
+```
+
+```{r}
+# re-fit with lmer
+lme.slope.simpson = lmer(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (ns(timepoint.new, knots = 7) | subject_id), 
+               data = df.div)
+
+# diagnostics
+lme.simpson.diag = DHARMa::simulateResiduals(lme.slope.simpson)
+plot(lme.simpson.diag)
+
+plotResiduals(lme.simpson.diag, form = df.div$clinical_outcome_wk14)
+plotResiduals(lme.simpson.diag, form = df.div$timepoint.new)
+plotResiduals(lme.simpson.diag, form = df.div$treated_with_donor)
+plotResiduals(lme.simpson.diag, form = df.div$sex)
+plotResiduals(lme.simpson.diag, form = df.div$age)
+plotResiduals(lme.simpson.diag, form = df.div$pretreatment)
+
+testDispersion(lme.simpson.diag)
+```
+
+```{r}
+# re-fit random intercepts model
+lme.int.simpson = lmer(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * ns(timepoint.new, knots = 7) + (1 | subject_id),
+               data = df.div)
+
+lme.int.simpson.diag = DHARMa::simulateResiduals(lme.int.simpson)
+plot(lme.int.simpson.diag)
+
+plotResiduals(lme.int.simpson.diag, form = df.div$clinical_outcome_wk14)
+plotResiduals(lme.int.simpson.diag, form = df.div$timepoint.new)
+plotResiduals(lme.int.simpson.diag, form = df.div$treated_with_donor)
+plotResiduals(lme.int.simpson.diag, form = df.div$sex)
+plotResiduals(lme.int.simpson.diag, form = df.div$age)
+plotResiduals(lme.int.simpson.diag, form = df.div$pretreatment)
+
+testDispersion(lme.int.simpson.diag)
+```
+
+
+```{r}
+# wald test for interaction
+wald.test(Sigma = vcov(lme.slope.simpson), b = fixef(lme.slope.simpson), Terms = c(6, 9, 10))
+```
+
+```{r}
+wald.test(Sigma = vcov(lme.slope.simpson), b = fixef(lme.slope.simpson), Terms = 2) # sex
+wald.test(Sigma = vcov(lme.slope.simpson), b = fixef(lme.slope.simpson), Terms = 3) # age
+wald.test(Sigma = vcov(lme.slope.simpson), b = fixef(lme.slope.simpson), Terms = 4) # pretreatment
+wald.test(Sigma = vcov(lme.slope.simpson), b = fixef(lme.slope.simpson), Terms = 5) # donor
+```
+
+```{r}
+# no splines and no transformation
+
+# random intercepts model
+lme.int.simpson = lme(simpson ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * timepoint.new, 
+               data = df.div, 
+               random = ~ 1 | subject_id)
+
+# random slopes
+lme.slope.simpson = lme(simpson ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * timepoint.new, 
+               data = df.div, 
+               random = ~ timepoint.new | subject_id)
+
+# test which model is better
+anova_results = anova(lme.int.simpson, lme.slope.simpson)
+mixtureLRT = anova_results[["L.Ratio"]][2]
+0.5 * pchisq(mixtureLRT, 1, lower.tail = FALSE) + 0.5 * pchisq(mixtureLRT, 2, lower.tail = FALSE)
+# use random intercepts
+
+# re-fit with lmer
+lme.int.simpson = lmer(simpson ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * timepoint.new + (timepoint.new | subject_id), 
+               data = df.div)
+
+summary(lme.int.simpson)
+```
+
+
+```{r}
+lme.int.simpson.diag = DHARMa::simulateResiduals(lme.int.simpson)
+plot(lme.int.simpson.diag)
+
+plotResiduals(lme.int.simpson.diag, form = df.div$clinical_outcome_wk14)
+plotResiduals(lme.int.simpson.diag, form = df.div$timepoint.new)
+plotResiduals(lme.int.simpson.diag, form = df.div$treated_with_donor)
+plotResiduals(lme.int.simpson.diag, form = df.div$sex)
+plotResiduals(lme.int.simpson.diag, form = df.div$age)
+plotResiduals(lme.int.simpson.diag, form = df.div$pretreatment)
+
+testDispersion(lme.int.simpson.diag)
+```
+```{r}
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 2) # sex
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 3) # age
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 4) # pretreatment
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 5) # donor
+
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = c(6, 8)) # interaction
+```
+
+```{r}
+# no splines and transformation
+
+# random intercepts model
+lme.int.simpson = lme(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * timepoint.new, 
+               data = df.div, 
+               random = ~ 1 | subject_id)
+
+# random slopes
+lme.slope.simpson = lme(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * timepoint.new, 
+               data = df.div, 
+               random = ~ timepoint.new | subject_id)
+
+# test which model is better
+anova_results = anova(lme.int.simpson, lme.slope.simpson)
+mixtureLRT = anova_results[["L.Ratio"]][2]
+0.5 * pchisq(mixtureLRT, 1, lower.tail = FALSE) + 0.5 * pchisq(mixtureLRT, 2, lower.tail = FALSE)
+# use random intercepts
+
+# re-fit with lmer
+lme.int.simpson = lmer(simpson.new ~ sex + age + pretreatment + treated_with_donor + clinical_outcome_wk14 * timepoint.new + (timepoint.new | subject_id), 
+               data = df.div)
+
+summary(lme.int.simpson)
+```
+
+```{r}
+lme.int.simpson.diag = DHARMa::simulateResiduals(lme.int.simpson)
+plot(lme.int.simpson.diag)
+
+plotResiduals(lme.int.simpson.diag, form = df.div$clinical_outcome_wk14)
+plotResiduals(lme.int.simpson.diag, form = df.div$timepoint.new)
+plotResiduals(lme.int.simpson.diag, form = df.div$treated_with_donor)
+plotResiduals(lme.int.simpson.diag, form = df.div$sex)
+plotResiduals(lme.int.simpson.diag, form = df.div$age)
+plotResiduals(lme.int.simpson.diag, form = df.div$pretreatment)
+
+testDispersion(lme.int.simpson.diag)
+output1 = recalculateResiduals(lme.int.simpson.diag, group=df.div$timepoint.new)
+testTemporalAutocorrelation(output1, time = unique(df.div$timepoint.new))
+```
+
+```{r}
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 2)$result # sex
+
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 3)$result # age
+
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 4)$result 
+# pretreatment
+
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = 5)$result # donor
+
+wald.test(Sigma = vcov(lme.int.simpson), b = fixef(lme.int.simpson), Terms = c(6, 8))$result # interaction
+```
