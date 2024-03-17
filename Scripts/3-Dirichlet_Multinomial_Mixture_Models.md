@@ -1,6 +1,6 @@
 Dirichlet Multinomial Mixture Models
 ================
-December 2022
+March 2024
 
 ## Load required packages
 
@@ -24,8 +24,8 @@ library( patchwork )
 
 ## Load the data
 
-Here we use the compositional count abundance dataset, because of the
-requirements of the Dirichlet multinomial mixed model.
+Here we use the count abundance dataset, because of the requirements of
+the Dirichlet multinomial mixed model.
 
 ## Preprocessing of the data
 

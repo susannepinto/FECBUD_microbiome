@@ -1,7 +1,7 @@
 ---
 title: "Dirichlet Multinomial Mixture Models"
-date: "December 2022"
 authors: "S. Pinto and D. Sajbenova"
+date: "March 2024"
 output:
   github_document: default
   word_document: default
@@ -35,7 +35,7 @@ library( patchwork )
 
 ## Load the data
 
-Here we use the compositional count abundance dataset, because of the requirements of the Dirichlet multinomial mixed model.
+Here we use the count abundance dataset, because of the requirements of the Dirichlet multinomial mixed model.
 
 ```{r Load Data, echo=FALSE}
 physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_countdata.rds" ) 
