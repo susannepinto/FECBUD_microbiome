@@ -1,0 +1,900 @@
+---
+title: "Script plots base case"
+date: "December 2022"
+author: "S. Pinto"
+output:
+  github_document: default
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r Load packages 1, echo=TRUE, message=FALSE}
+library( gamlss )
+library( tidyverse )
+library( ggplot2 )
+library( aod )
+library( nlme )
+library( lme4 )
+library( splines )
+library( jtools )
+library( dplyr )
+library( reshape2 )
+```
+
+## Load the data
+
+Here we use the relative abundance dataset.
+
+```{r Load Data, echo=FALSE}
+load("/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/Scenario2.Rda")
+Scenario2 <- results.all.count
+
+names(Scenario2)[names(Scenario2) == 'n'] <- 'Scenario2'
+```
+
+# Model the data
+
+```{r models scenario 2, results = FALSE}
+Scenario2.model <- Scenario2
+# Remove category 'Absent', because always 9
+Scenario2.model <- Scenario2.model  %>% filter( category != "Absent" )
+# make time categorical (translate to weeks)
+Scenario2.model$time <- 0
+Scenario2.model$time[ Scenario2.model$timepoint == "Post_1" ] <- 1
+Scenario2.model$time[ Scenario2.model$timepoint == "Post_2" ] <- 2
+Scenario2.model$time[ Scenario2.model$timepoint == "Post_3" ] <- 3
+Scenario2.model$time[ Scenario2.model$timepoint == "Post_4" ] <- 4
+Scenario2.model$time[ Scenario2.model$timepoint == "Week8" ] <- 8
+Scenario2.model$time[ Scenario2.model$timepoint == "Week10" ] <- 10
+Scenario2.model$time[ Scenario2.model$timepoint == "Week14" ] <- 14
+# Rescale time, because of the warning (Model is nearly unidentifiable: very large eigenvalue)
+Scenario2.model$time2 <- Scenario2.model$time / 52
+Scenario2.model$Scenario2[Scenario2.model$category == "Host Transient" & (Scenario2.model$time2 ==1/52 | Scenario2.model$time2 ==2/52)] <- NA
+Scenario2.model$Scenario2[Scenario2.model$category == "Donor Transient" & (Scenario2.model$time2 ==1/52 | Scenario2.model$time2 ==2/52 | Scenario2.model$time2 ==3/52)] <- NA
+Scenario2.model$Scenario2[Scenario2.model$category == "Novel Transient" & (Scenario2.model$time2 ==1/52 | Scenario2.model$time2 ==2/52 | Scenario2.model$time2 ==3/52)] <- NA
+Scenario2.model$Scenario2[Scenario2.model$category == "Novel loss" & (Scenario2.model$time2 ==1/52 )] <- NA
+# Rescale age
+Scenario2.model$Age <- Scenario2.model$Age %>% as.numeric()
+Scenario2.model$Age2 <- Scenario2.model$Age / 10
+# reorder state
+Scenario2.model$State <- Scenario2.model$State %>% factor(levels = c("None", "Good"))
+```
+
+Models below take some time to run!
+
+```{r the model 2, echo = FALSE}
+# model 2
+model.eco.scenario2 <- glmer.nb( Scenario2 ~ -1 + time2  * category * State + Donor + Sex + ( 1 | Patient_ID ), data = Scenario2.model, verbose = 2 )
+#save( model.eco.scenario2, file = "finalmodel.eco.scenario2.Rda" )
+
+model.eco.scenario2.splines2 <- glmer.nb( Scenario2 ~ -1 + ns( time2, df = 2)  * category * State + Donor + Sex +  ( 1 | Patient_ID ), 
+                        data = Scenario2.model, verbose = 2 )
+```
+
+```{r the model 2 outputs}
+# model 2
+model.eco.scenario2
+summary(model.eco.scenario2)
+
+model.eco.scenario2.splines2 
+summary(model.eco.scenario2.splines2)
+```
+
+# Plot the results
+
+
+```{r plot (2) log}
+fixed_effects <- fixef(model.eco.scenario2)
+
+Scenario2.model$Patient_ID <- factor(Scenario2.model$Patient_ID )
+Scenario2.model$category <- factor(Scenario2.model$category)
+Scenario2.model$Donor <- factor(Scenario2.model$Donor)
+Scenario2.model$Pretreatment <- factor(Scenario2.model$Pretreatment)
+Scenario2.model$Sex <- factor(Scenario2.model$Sex)
+
+plot_data <- expand.grid(Patient_ID = levels(Scenario2.model$Patient_ID), 
+                         time2 = seq(min(Scenario2.model$time2), max(Scenario2.model$time2), length.out = 100),
+                         # time = seq(min(Scenario2.model$time), max(Scenario2.model$time), length.out = 100),
+                         category = levels(Scenario2.model$category),
+                         State = levels(Scenario2.model$State),
+                         Donor = levels(Scenario2.model$Donor),
+                         Pretreatment = levels(Scenario2.model$Pretreatment),
+                         Sex = levels(Scenario2.model$Sex))
+
+plot_data$Scenario2 <- predict(model.eco.scenario2, newdata = plot_data, type = "response", allow.new.levels = TRUE)
+
+Scenario2.model$category <- factor(Scenario2.model$category, levels = c( 'Resident', 'Host Transient', 'Species loss','Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+plot_data$category <- factor(plot_data$category, levels = c( 'Resident', 'Host Transient', 'Species loss','Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+
+Scenario2.model$time <- Scenario2.model$time %>% as.numeric()
+
+ggplot(data = Scenario2.model, aes(x = time2, y = Scenario2, color = State)) +
+  geom_line(aes(group = Patient_ID), color="grey", alpha = 0.4) +
+  geom_point() +
+  #geom_line(data = plot_data, aes(x = time2, y = Scenario2),  size = 0.2, alpha = 0.2) +
+  geom_line(data = plot_data, aes(x = time2, y = Scenario2),  size = 1, stat = "summary", fun = mean, alpha = 1) +
+  labs(x = "Weeks since first FMT", y = "n") +
+  theme_bw() +
+  scale_y_continuous(trans='log10') +
+  facet_wrap(~category) +
+  scale_color_manual(
+    breaks = c("Good", "None"),
+    values = c("#82E0AA", "#EC7063")
+  ) 
+```
+```{r}
+fixed_effects <- fixef(model.eco.scenario2)
+
+Scenario2.model$Patient_ID <- factor(Scenario2.model$Patient_ID )
+Scenario2.model$category <- factor(Scenario2.model$category)
+Scenario2.model$Donor <- factor(Scenario2.model$Donor)
+Scenario2.model$Pretreatment <- factor(Scenario2.model$Pretreatment)
+Scenario2.model$Sex <- factor(Scenario2.model$Sex)
+
+plot_data <- expand.grid(Patient_ID = levels(Scenario2.model$Patient_ID), 
+                         time2 = seq(min(Scenario2.model$time2), max(Scenario2.model$time2), length.out = 100),
+                         # time = seq(min(Scenario2.model$time), max(Scenario2.model$time), length.out = 100),
+                         category = levels(Scenario2.model$category),
+                         State = levels(Scenario2.model$State),
+                         Donor = levels(Scenario2.model$Donor),
+                         Pretreatment = levels(Scenario2.model$Pretreatment),
+                         Sex = levels(Scenario2.model$Sex))
+
+plot_data$Scenario2 <- predict(model.eco.scenario2, newdata = plot_data, type = "response", allow.new.levels = TRUE)
+
+Scenario2.model$category <- factor(Scenario2.model$category, levels = c( 'Resident', 'Host Transient', 'Species loss','Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+plot_data$category <- factor(plot_data$category, levels = c( 'Resident', 'Host Transient', 'Species loss','Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+
+Scenario2.model$time <- Scenario2.model$time %>% as.numeric()
+
+ggplot(data = Scenario2.model, aes(x = time2, y = Scenario2, color = State)) +
+  geom_line(aes(group = Patient_ID), color="grey", alpha = 0.4) +
+  geom_point() +
+  #geom_line(data = plot_data, aes(x = time2, y = Scenario2),  size = 0.2, alpha = 0.2) +
+  geom_line(data = plot_data, aes(x = time2, y = Scenario2),  size = 1, stat = "summary", fun = mean, alpha = 1) +
+  labs(x = "Weeks since first FMT", y = "n") +
+  theme_bw() +
+  #scale_y_continuous(trans='log10') +
+  facet_wrap(~category, scales = "free") +
+  scale_color_manual(
+    breaks = c("Good", "None"),
+    values = c("#82E0AA", "#EC7063")
+  ) 
+```
+
+# Plot the model
+
+```{r plot models (1)}
+custom_order <- c("categoryResident", "categoryHost Transient", "categorySpecies loss",
+                  "categoryColonisation", "categoryDonor Transient", "categoryRejection",
+                  "categoryNovel", "categoryNovel Transient", "categoryNovel loss",
+                  "DonorDonor B", "SexM",
+                  # "Pretreatmentplacebo", 
+                  "time2:categoryResident", "time2:categoryHost Transient",
+                  "time2:categorySpecies loss", "time2", "time2:categoryDonor Transient",
+                  "time2:categoryRejection", "time2:categoryNovel",
+                  "time2:categoryNovel Transient", "time2:categoryNovel loss",
+                  "categoryResident:StateGood", "categoryHost Transient:StateGood",
+                  "categorySpecies loss:StateGood", "StateGood",
+                  "categoryDonor Transient:StateGood", "categoryRejection:StateGood",
+                  "categoryNovel:StateGood", "categoryNovel Transient:StateGood",
+                  "categoryNovel loss:StateGood", "time2:categoryResident:StateGood",
+                  "time2:categoryHost Transient:StateGood", "time2:categorySpecies loss:StateGood",
+                  "time2:StateGood", "time2:categoryDonor Transient:StateGood",
+                  "time2:categoryRejection:StateGood", "time2:categoryNovel:StateGood",
+                  "time2:categoryNovel Transient:StateGood", "time2:categoryNovel loss:StateGood")
+
+custom_labels <- c("categoryResident" = "Resident",
+                   "categoryHost Transient" = "Host Transient",
+                   "categorySpecies loss" = "Species loss",
+                   "categoryColonisation" = "Colonisation",
+                   "categoryDonor Transient" = "Donor Transient",
+                   "categoryRejection" = "Rejection",
+                   "categoryNovel" = "Novel",
+                   "categoryNovel Transient" = "Novel Transient",
+                   "categoryNovel loss" = "Novel loss",
+                   
+                   "DonorDonor B" = "Donor (Donor D08)",
+                   #"Pretreatmentplacebo" = "Pretreatment (placebo)",                        
+                   "SexM" = "Sex (Male)",
+                   
+                   "time2:categoryResident" = "Resident * time",               
+                   "time2:categoryHost Transient" = "Host Transient * time",  
+                   "time2:categorySpecies loss" = "Species loss * time",  
+                   "time2" = "Colonisation * time",
+                   "time2:categoryDonor Transient" = "Donor Transient * time",
+                   "time2:categoryRejection" = "Rejection * time",  
+                   "time2:categoryNovel" = "Novel * time",
+                   "time2:categoryNovel Transient" = "Novel Transient * time",
+                   "time2:categoryNovel loss" = "Novel loss * time",  
+                   
+                   "categoryResident:StateGood" = "Resident * State (Good)",  
+                   "categoryHost Transient:StateGood" = "Host Transient * State (Good)",
+                   "categorySpecies loss:StateGood" = "Species loss * State (Good)",  
+                   "StateGood" = "Colonisation * State (Good)",                             
+                   "categoryDonor Transient:StateGood" = "Donor Transient * State (Good)",  
+                   "categoryRejection:StateGood" = "Rejection * State (Good)",               
+                   "categoryNovel:StateGood" = "Novel * State (Good)",  
+                   "categoryNovel Transient:StateGood" = "Novel Transient * State (Good)",  
+                   "categoryNovel loss:StateGood" = "Novel loss * State (Good)",        
+                   
+                   "time2:categoryResident:StateGood" = "Resident * time * State (Good)",  
+                   "time2:categoryHost Transient:StateGood" = "Host Transient * time * State (Good)",           
+                   "time2:categorySpecies loss:StateGood" = "Species loss * time * State (Good)",
+
+                  "time2:StateGood" = "Colonisation * time * State (Good)",        
+                   "time2:categoryDonor Transient:StateGood" = "Donor Transient * time * State (Good)", 
+                   "time2:categoryRejection:StateGood" = "Rejection * time * State (Good)",        
+                   "time2:categoryNovel:StateGood" = "Novel * time * State (Good)",  
+                   "time2:categoryNovel Transient:StateGood" = "Novel Transient * time * State (Good)", 
+                   "time2:categoryNovel loss:StateGood" = "Novel loss * time * State (Good)" 
+                   )
+
+# Plots
+plot_summs( model.eco.scenario2 ) +
+theme( panel.grid.major = element_line(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.line = element_line(),
+    text = element_text( family = 'Helvetica' ),
+    legend.title = element_blank(), 
+    axis.text = element_text( size = 25 ),
+    axis.title = element_text( size = 15 )) +
+  scale_y_discrete(labels = custom_labels, limits = rev(custom_order))
+```
+
+## Plot the intercept and slope separate per state
+
+```{r intercept and slope separate}
+# Extract coefficients and their standard errors from the model summary
+model_summary <- summary(model.eco.scenario2)
+coefficients_df <- data.frame(
+  Coefficient = rownames(model_summary$coefficients),
+  Estimate = model_summary$coefficients[, "Estimate"],
+  Std_Error = model_summary$coefficients[, "Std. Error"]
+)
+
+custom_labels <- c("categoryResident" = "Resident",
+                   "categoryHost Transient" = "Host Transient",
+                   "categorySpecies loss" = "Species loss",
+                   "categoryColonisation" = "Colonisation",
+                   "categoryDonor Transient" = "Donor Transient",
+                   "categoryRejection" = "Rejection",
+                   "categoryNovel" = "Novel",
+                   "categoryNovel Transient" = "Novel Transient",
+                   "categoryNovel loss" = "Novel loss",
+                   
+                   "DonorDonor B" = "Donor (Donor B)",
+                   "Pretreatmentplacebo" = "Pretreatment (placebo)",                        
+                   "SexM" = "Sex (Male)",
+                   
+                   "time2:categoryResident" = "Resident * time",               
+                   "time2:categoryHost Transient" = "Host Transient * time",  
+                   "time2:categorySpecies loss" = "Species loss * time",  
+                   "time2" = "Colonisation * time",
+                   "time2:categoryDonor Transient" = "Donor Transient * time",
+                   "time2:categoryRejection" = "Rejection * time",  
+                   "time2:categoryNovel" = "Novel * time",
+                   "time2:categoryNovel Transient" = "Novel Transient * time",
+                   "time2:categoryNovel loss" = "Novel loss * time",  
+                   
+                   "categoryResident:StateGood" = "Resident * State (Good)",  
+                   "categoryHost Transient:StateGood" = "Host Transient * State (Good)",
+                   "categorySpecies loss:StateGood" = "Species loss * State (Good)",  
+                   "StateGood" = "Colonisation * State (Good)",                             
+                   "categoryDonor Transient:StateGood" = "Donor Transient * State (Good)",  
+                   "categoryRejection:StateGood" = "Rejection * State (Good)",               
+                   "categoryNovel:StateGood" = "Novel * State (Good)",  
+                   "categoryNovel Transient:StateGood" = "Novel Transient * State (Good)",  
+                   "categoryNovel loss:StateGood" = "Novel loss * State (Good)",        
+                   
+                   "time2:categoryResident:StateGood" = "Resident * time * State (Good)",  
+                   "time2:categoryHost Transient:StateGood" = "Host Transient * time * State (Good)",           
+                   "time2:categorySpecies loss:StateGood" = "Species loss * time * State (Good)",  
+                  "time2:StateGood" = "Colonisation * time * State (Good)",        
+                   "time2:categoryDonor Transient:StateGood" = "Donor Transient * time * State (Good)", 
+                   "time2:categoryRejection:StateGood" = "Rejection * time * State (Good)",        
+                   "time2:categoryNovel:StateGood" = "Novel * time * State (Good)",  
+                   "time2:categoryNovel Transient:StateGood" = "Novel Transient * time * State (Good)", 
+                   "time2:categoryNovel loss:StateGood" = "Novel loss * time * State (Good)" 
+                   )
+
+# Use custom_labels to replace the Coefficient names
+coefficients_df$Coefficient <- custom_labels[coefficients_df$Coefficient]
+
+# Define the custom_order
+custom_order <- c(
+  "categoryResident", "categoryHost Transient", "categorySpecies loss",
+  "categoryColonisation", "categoryDonor Transient", "categoryRejection",
+  "categoryNovel", "categoryNovel Transient", "categoryNovel loss",
+  "DonorDonor B", "Pretreatmentplacebo", "SexM",
+  "time2:categoryResident", "time2:categoryHost Transient",
+  "time2:categorySpecies loss", "time2", "time2:categoryDonor Transient",
+  "time2:categoryRejection", "time2:categoryNovel",
+  "time2:categoryNovel Transient", "time2:categoryNovel loss",
+  "categoryResident:StateGood", "categoryHost Transient:StateGood",
+  "categorySpecies loss:StateGood", "StateGood",
+  "categoryDonor Transient:StateGood", "categoryRejection:StateGood",
+  "categoryNovel:StateGood", "categoryNovel Transient:StateGood",
+  "categoryNovel loss:StateGood", "time2:categoryResident:StateGood",
+  "time2:categoryHost Transient:StateGood", "time2:categorySpecies loss:StateGood",
+  "time2:StateGood", "time2:categoryDonor Transient:StateGood",
+  "time2:categoryRejection:StateGood", "time2:categoryNovel:StateGood",
+  "time2:categoryNovel Transient:StateGood", "time2:categoryNovel loss:StateGood"
+)
+
+# Reorder the rows in coefficients_df based on custom_order
+coefficients_df <- coefficients_df[match(custom_order, rownames(coefficients_df)), ]
+
+# Print the coefficients data frame
+print(coefficients_df)
+
+# Create the Category and State vectors
+Category <- rep(c("Resident", "Host Transient", "Species loss", "Colonisation", "Donor Transient", "Rejection", "Novel", "Novel Transient", "Novel loss"), each = 4)
+State <- rep(rep(c("Responder", "Non-responder"), each = 2), times = 9)
+
+# Create the InterceptOrSlope vector
+InterceptOrSlope <- NA
+InterceptOrSlope <- rep(c("Intercept", "Slope"), times = 18)
+
+# Create an empty data frame
+InterceptsAndSlopes <- data.frame(Category, State, InterceptOrSlope)
+
+# Add empty columns for "Estimate", "Std Error", "Lower limit", "Upper limit"
+InterceptsAndSlopes$Estimate <- NA
+InterceptsAndSlopes$`Std.Error` <- NA
+InterceptsAndSlopes$`LowerLimit` <- NA
+InterceptsAndSlopes$`UpperLimit` <- NA
+
+# Print the resulting data frame
+print(InterceptsAndSlopes)
+
+# Resident          Good        Intercept
+ResidentGoodIntercept.Estimate <- coefficients_df[1,2] + coefficients_df[22,2]
+InterceptsAndSlopes[1,4] <- ResidentGoodIntercept.Estimate
+
+ResidentGoodIntercept.Variance <- (coefficients_df[1,3])^2 + (coefficients_df[22,3])^2
+InterceptsAndSlopes[1,5] <- sqrt(ResidentGoodIntercept.Variance)
+
+ResidentGoodIntercept.Lowerlimit <- InterceptsAndSlopes[1,4] - (1.96 * InterceptsAndSlopes[1,5])
+InterceptsAndSlopes[1,6] <- ResidentGoodIntercept.Lowerlimit
+
+ResidentGoodIntercept.Upperlimit <- InterceptsAndSlopes[1,4] + (1.96 * InterceptsAndSlopes[1,5])
+InterceptsAndSlopes[1,7] <- ResidentGoodIntercept.Upperlimit
+
+# Resident          Good        Slope
+ResidentGoodSlope.Estimate <- coefficients_df[13,2] + coefficients_df[31,2]
+InterceptsAndSlopes[2,4] <- ResidentGoodSlope.Estimate
+
+ResidentGoodSlope.Variance <- (coefficients_df[13,3])^2 + (coefficients_df[31,3])^2
+InterceptsAndSlopes[2,5] <- sqrt(ResidentGoodSlope.Variance)
+
+ResidentGoodSlope.Lowerlimit <- InterceptsAndSlopes[2,4] - (1.96 * InterceptsAndSlopes[2,5])
+InterceptsAndSlopes[2,6] <- ResidentGoodSlope.Lowerlimit
+
+ResidentGoodSlope.Upperlimit <- InterceptsAndSlopes[2,4] + (1.96 * InterceptsAndSlopes[2,5])
+InterceptsAndSlopes[2,7] <- ResidentGoodSlope.Upperlimit
+
+# Resident          None        Intercept     
+ResidentNoneIntercept.Estimate <- coefficients_df[1,2]
+InterceptsAndSlopes[3,4] <- ResidentNoneIntercept.Estimate
+
+ResidentNoneIntercept.Variance <- (coefficients_df[1,3])^2
+InterceptsAndSlopes[3,5] <- sqrt(ResidentNoneIntercept.Variance)
+
+ResidentNoneIntercept.Lowerlimit <- InterceptsAndSlopes[3,4] - (1.96 * InterceptsAndSlopes[3,5])
+InterceptsAndSlopes[3,6] <- ResidentNoneIntercept.Lowerlimit
+
+ResidentNoneIntercept.Upperlimit <- InterceptsAndSlopes[3,4] + (1.96 * InterceptsAndSlopes[3,5])
+InterceptsAndSlopes[3,7] <- ResidentNoneIntercept.Upperlimit
+
+# Resident          None        Slope     
+ResidentNoneSlope.Estimate <- coefficients_df[13,2] 
+InterceptsAndSlopes[4,4] <- ResidentNoneSlope.Estimate
+
+ResidentNoneSlope.Variance <- (coefficients_df[13,3])^2
+InterceptsAndSlopes[4,5] <- sqrt(ResidentNoneSlope.Variance)
+
+ResidentNoneSlope.Lowerlimit <- InterceptsAndSlopes[4,4] - (1.96 * InterceptsAndSlopes[4,5])
+InterceptsAndSlopes[4,6] <- ResidentNoneSlope.Lowerlimit
+
+ResidentNoneSlope.Upperlimit <- InterceptsAndSlopes[4,4] + (1.96 * InterceptsAndSlopes[4,5])
+InterceptsAndSlopes[4,7] <- ResidentNoneSlope.Upperlimit
+
+# Host Transient    Good        Intercept
+HostTransientGoodIntercept.Estimate <- coefficients_df[2,2] + coefficients_df[23,2]
+InterceptsAndSlopes[5,4] <- HostTransientGoodIntercept.Estimate
+
+HostTransientGoodIntercept.Variance <- (coefficients_df[2,3])^2 + (coefficients_df[23,3])^2
+InterceptsAndSlopes[5,5] <- sqrt(HostTransientGoodIntercept.Variance)
+
+HostTransientGoodIntercept.Lowerlimit <- InterceptsAndSlopes[5,4] - (1.96 * InterceptsAndSlopes[5,5])
+InterceptsAndSlopes[5,6] <- HostTransientGoodIntercept.Lowerlimit
+
+HostTransientGoodIntercept.Upperlimit <- InterceptsAndSlopes[5,4] + (1.96 * InterceptsAndSlopes[5,5])
+InterceptsAndSlopes[5,7] <- HostTransientGoodIntercept.Upperlimit
+
+# Host Transient    Good        Slope   
+HostTransientGoodSlope.Estimate <- coefficients_df[14,2] + coefficients_df[32,2]
+InterceptsAndSlopes[6,4] <- HostTransientGoodSlope.Estimate
+
+HostTransientGoodSlope.Variance <- (coefficients_df[14,3])^2 + (coefficients_df[32,3])^2
+InterceptsAndSlopes[6,5] <- sqrt(HostTransientGoodSlope.Variance)
+
+HostTransientGoodSlope.Lowerlimit <- InterceptsAndSlopes[6,4] - (1.96 * InterceptsAndSlopes[6,5])
+InterceptsAndSlopes[6,6] <- HostTransientGoodSlope.Lowerlimit
+
+HostTransientGoodSlope.Upperlimit <- InterceptsAndSlopes[6,4] + (1.96 * InterceptsAndSlopes[6,5])
+InterceptsAndSlopes[6,7] <- HostTransientGoodSlope.Upperlimit
+
+# Host Transient    None        Intercept   
+HostTransientNoneIntercept.Estimate <- coefficients_df[2,2]
+InterceptsAndSlopes[7,4] <- HostTransientNoneIntercept.Estimate
+
+HostTransientNoneIntercept.Variance <- (coefficients_df[2,3])^2
+InterceptsAndSlopes[7,5] <- sqrt(HostTransientNoneIntercept.Variance)
+
+HostTransientNoneIntercept.Lowerlimit <- InterceptsAndSlopes[7,4] - (1.96 * InterceptsAndSlopes[7,5])
+InterceptsAndSlopes[7,6] <- HostTransientNoneIntercept.Lowerlimit
+
+HostTransientNoneIntercept.Upperlimit <- InterceptsAndSlopes[7,4] + (1.96 * InterceptsAndSlopes[7,5])
+InterceptsAndSlopes[7,7] <- HostTransientNoneIntercept.Upperlimit
+
+# Host Transient    None        Slope   
+HostTransientNoneSlope.Estimate <- coefficients_df[14,2] 
+InterceptsAndSlopes[8,4] <- HostTransientNoneSlope.Estimate
+
+HostTransientNoneSlope.Variance <- (coefficients_df[14,3])^2
+InterceptsAndSlopes[8,5] <- sqrt(HostTransientNoneSlope.Variance)
+
+HostTransientNoneSlope.Lowerlimit <- InterceptsAndSlopes[8,4] - (1.96 * InterceptsAndSlopes[8,5])
+InterceptsAndSlopes[8,6] <- HostTransientNoneSlope.Lowerlimit
+
+HostTransientNoneSlope.Upperlimit <- InterceptsAndSlopes[8,4] + (1.96 * InterceptsAndSlopes[8,5])
+InterceptsAndSlopes[8,7] <- HostTransientNoneSlope.Upperlimit
+
+# Species loss      Good        Intercept 
+SpeciesLossGoodIntercept.Estimate <- coefficients_df[3,2] + coefficients_df[24,2]
+InterceptsAndSlopes[9,4] <- SpeciesLossGoodIntercept.Estimate
+
+SpeciesLossGoodIntercept.Variance <- (coefficients_df[3,3])^2 + (coefficients_df[24,3])^2
+InterceptsAndSlopes[9,5] <- sqrt(SpeciesLossGoodIntercept.Variance)
+
+SpeciesLossGoodIntercept.Lowerlimit <- InterceptsAndSlopes[9,4] - (1.96 * InterceptsAndSlopes[9,5])
+InterceptsAndSlopes[9,6] <- SpeciesLossGoodIntercept.Lowerlimit
+
+SpeciesLossGoodIntercept.Upperlimit <- InterceptsAndSlopes[9,4] + (1.96 * InterceptsAndSlopes[9,5])
+InterceptsAndSlopes[9,7] <- SpeciesLossGoodIntercept.Upperlimit
+
+# Species loss      Good        Slope     
+SpeciesLossGoodSlope.Estimate <- coefficients_df[15,2] + coefficients_df[33,2]
+InterceptsAndSlopes[10,4] <- SpeciesLossGoodSlope.Estimate
+
+SpeciesLossGoodSlope.Variance <- (coefficients_df[15,3])^2 + (coefficients_df[33,3])^2
+InterceptsAndSlopes[10,5] <- sqrt(SpeciesLossGoodSlope.Variance)
+
+SpeciesLossGoodSlope.Lowerlimit <- InterceptsAndSlopes[10,4] - (1.96 * InterceptsAndSlopes[10,5])
+InterceptsAndSlopes[10,6] <- SpeciesLossGoodSlope.Lowerlimit
+
+SpeciesLossGoodSlope.Upperlimit <- InterceptsAndSlopes[10,4] + (1.96 * InterceptsAndSlopes[10,5])
+InterceptsAndSlopes[10,7] <- SpeciesLossGoodSlope.Upperlimit
+
+# Species loss      None        Intercept
+SpeciesLossNoneIntercept.Estimate <- coefficients_df[3,2]
+InterceptsAndSlopes[11,4] <- SpeciesLossNoneIntercept.Estimate
+
+SpeciesLossNoneIntercept.Variance <- (coefficients_df[3,3])^2
+InterceptsAndSlopes[11,5] <- sqrt(SpeciesLossNoneIntercept.Variance)
+
+SpeciesLossNoneIntercept.Lowerlimit <- InterceptsAndSlopes[11,4] - (1.96 * InterceptsAndSlopes[11,5])
+InterceptsAndSlopes[11,6] <- SpeciesLossNoneIntercept.Lowerlimit
+
+SpeciesLossNoneIntercept.Upperlimit <- InterceptsAndSlopes[11,4] + (1.96 * InterceptsAndSlopes[11,5])
+InterceptsAndSlopes[11,7] <- SpeciesLossNoneIntercept.Upperlimit
+
+# Species loss      None        Slope
+SpeciesLossNoneSlope.Estimate <- coefficients_df[15,2]
+InterceptsAndSlopes[12,4] <- SpeciesLossNoneSlope.Estimate 
+
+SpeciesLossNoneSlope.Variance <- (coefficients_df[15,3])^2
+InterceptsAndSlopes[12,5] <- sqrt(SpeciesLossNoneSlope.Variance)
+
+SpeciesLossNoneSlope.Lowerlimit <- InterceptsAndSlopes[12,4] - (1.96 * InterceptsAndSlopes[12,5])
+InterceptsAndSlopes[12,6] <- SpeciesLossNoneSlope.Lowerlimit
+
+SpeciesLossNoneSlope.Upperlimit <- InterceptsAndSlopes[12,4] + (1.96 * InterceptsAndSlopes[12,5])
+InterceptsAndSlopes[12,7] <- SpeciesLossNoneSlope.Upperlimit
+
+# Colonisation      Good        Intercept
+ColonisationGoodIntercept.Estimate <- coefficients_df[4,2] + coefficients_df[25,2]
+InterceptsAndSlopes[13,4] <- ColonisationGoodIntercept.Estimate
+
+ColonisationGoodIntercept.Variance <- (coefficients_df[4,3])^2 + (coefficients_df[25,3])^2
+InterceptsAndSlopes[13,5] <- sqrt(ColonisationGoodIntercept.Variance)
+
+ColonisationGoodIntercept.Lowerlimit <- InterceptsAndSlopes[13,4] - (1.96 * InterceptsAndSlopes[13,5])
+InterceptsAndSlopes[13,6] <- ColonisationGoodIntercept.Lowerlimit
+
+ColonisationGoodIntercept.Upperlimit <- InterceptsAndSlopes[13,4] + (1.96 * InterceptsAndSlopes[13,5])
+InterceptsAndSlopes[13,7] <- ColonisationGoodIntercept.Upperlimit
+
+# Colonisation      Good        Slope
+ColonisationGoodSlope.Estimate <- coefficients_df[16,2] + coefficients_df[34,2]
+InterceptsAndSlopes[14,4] <- ColonisationGoodSlope.Estimate
+
+ColonisationGoodSlope.Variance <- (coefficients_df[16,3])^2 + (coefficients_df[34,3])^2
+InterceptsAndSlopes[14,5] <- sqrt(ColonisationGoodSlope.Variance)
+
+ColonisationGoodSlope.Lowerlimit <- InterceptsAndSlopes[14,4] - (1.96 * InterceptsAndSlopes[14,5])
+InterceptsAndSlopes[14,6] <- ColonisationGoodSlope.Lowerlimit
+
+ColonisationGoodSlope.Upperlimit <- InterceptsAndSlopes[14,4] + (1.96 * InterceptsAndSlopes[14,5])
+InterceptsAndSlopes[14,7] <- ColonisationGoodSlope.Upperlimit
+
+# Colonisation      None        Intercept
+ColonisationNoneIntercept.Estimate <- coefficients_df[4,2]
+InterceptsAndSlopes[15,4] <- ColonisationNoneIntercept.Estimate
+
+ColonisationNoneIntercept.Variance <- (coefficients_df[4,3])^2
+InterceptsAndSlopes[15,5] <- sqrt(ColonisationNoneIntercept.Variance )
+
+ColonisationNoneIntercept.Lowerlimit <- InterceptsAndSlopes[15,4] - (1.96 * InterceptsAndSlopes[15,5])
+InterceptsAndSlopes[15,6] <- ColonisationNoneIntercept.Lowerlimit
+
+ColonisationNoneIntercept.Upperlimit <- InterceptsAndSlopes[15,4] + (1.96 * InterceptsAndSlopes[15,5])
+InterceptsAndSlopes[15,7] <- ColonisationNoneIntercept.Upperlimit
+
+# Colonisation      None        Slope
+ColonisationNoneSlope.Estimate <- coefficients_df[16,2]
+InterceptsAndSlopes[16,4] <- ColonisationNoneSlope.Estimate
+
+ColonisationNoneSlope.Variance <- (coefficients_df[16,3])^2
+InterceptsAndSlopes[16,5] <- sqrt(ColonisationNoneSlope.Variance)
+
+ColonisationNoneSlope.Lowerlimit <- InterceptsAndSlopes[16,4] - (1.96 * InterceptsAndSlopes[16,5])
+InterceptsAndSlopes[16,6] <- ColonisationNoneSlope.Lowerlimit
+
+ColonisationNoneSlope.Upperlimit <- InterceptsAndSlopes[16,4] + (1.96 * InterceptsAndSlopes[16,5])
+InterceptsAndSlopes[16,7] <- ColonisationNoneSlope.Upperlimit
+
+# Donor Transient   Good        Intercept
+DonorTransientGoodIntercept.Estimate <- coefficients_df[5,2] + coefficients_df[26,2]
+InterceptsAndSlopes[17,4] <- DonorTransientGoodIntercept.Estimate
+
+DonorTransientGoodIntercept.Variance <- (coefficients_df[5,3])^2 + (coefficients_df[26,3])^2
+InterceptsAndSlopes[17,5] <- sqrt(DonorTransientGoodIntercept.Variance)
+
+DonorTransientGoodIntercept.Lowerlimit <- InterceptsAndSlopes[17,4] - (1.96 * InterceptsAndSlopes[17,5])
+InterceptsAndSlopes[17,6] <- DonorTransientGoodIntercept.Lowerlimit
+
+DonorTransientGoodIntercept.Upperlimit <- InterceptsAndSlopes[17,4] + (1.96 * InterceptsAndSlopes[17,5])
+InterceptsAndSlopes[17,7] <- DonorTransientGoodIntercept.Upperlimit
+
+# Donor Transient   Good        Slope
+DonorTransientGoodSlope.Estimate <- coefficients_df[17,2] + coefficients_df[35,2]
+InterceptsAndSlopes[18,4] <- DonorTransientGoodSlope.Estimate
+
+DonorTransientGoodSlope.Variance <- (coefficients_df[17,3])^2 + (coefficients_df[35,3])^2
+InterceptsAndSlopes[18,5] <- sqrt(DonorTransientGoodSlope.Variance)
+
+DonorTransientGoodSlope.Lowerlimit <- InterceptsAndSlopes[18,4] - (1.96 * InterceptsAndSlopes[18,5])
+InterceptsAndSlopes[18,6] <- DonorTransientGoodSlope.Lowerlimit
+
+DonorTransientGoodSlope.Upperlimit <- InterceptsAndSlopes[18,4] + (1.96 * InterceptsAndSlopes[18,5])
+InterceptsAndSlopes[18,7] <- DonorTransientGoodSlope.Upperlimit
+
+# Donor Transient   None        Intercept
+DonorTransientNoneIntercept.Estimate <- coefficients_df[5,2]
+InterceptsAndSlopes[19,4] <- DonorTransientNoneIntercept.Estimate
+
+DonorTransientNoneIntercept.Variance <- (coefficients_df[5,3])^2
+InterceptsAndSlopes[19,5] <- sqrt(DonorTransientNoneIntercept.Variance )
+
+DonorTransientNoneIntercept.Lowerlimit <- InterceptsAndSlopes[19,4] - (1.96 * InterceptsAndSlopes[19,5])
+InterceptsAndSlopes[19,6] <- DonorTransientNoneIntercept.Lowerlimit
+
+DonorTransientNoneIntercept.Upperlimit <- InterceptsAndSlopes[19,4] + (1.96 * InterceptsAndSlopes[19,5])
+InterceptsAndSlopes[19,7] <- DonorTransientNoneIntercept.Upperlimit
+
+# Donor Transient   None        Slope
+DonorTransientNoneSlope.Estimate <- coefficients_df[17,2]
+InterceptsAndSlopes[20,4] <- DonorTransientNoneSlope.Estimate
+
+DonorTransientNoneSlope.Variance <- (coefficients_df[17,3])^2
+InterceptsAndSlopes[20,5] <- sqrt(DonorTransientNoneSlope.Variance)
+
+DonorTransientNoneSlope.Lowerlimit <- InterceptsAndSlopes[20,4] - (1.96 * InterceptsAndSlopes[20,5])
+InterceptsAndSlopes[20,6] <- DonorTransientNoneSlope.Lowerlimit
+
+DonorTransientNoneSlope.Upperlimit <- InterceptsAndSlopes[20,4] + (1.96 * InterceptsAndSlopes[20,5])
+InterceptsAndSlopes[20,7] <- DonorTransientNoneSlope.Upperlimit
+
+# Rejection         Good        Intercept
+RejectionGoodIntercept.Estimate <- coefficients_df[6,2] + coefficients_df[27,2]
+InterceptsAndSlopes[21,4] <- RejectionGoodIntercept.Estimate
+
+RejectionGoodIntercept.Variance <- (coefficients_df[6,3])^2 + (coefficients_df[27,3])^2
+InterceptsAndSlopes[21,5] <- sqrt(RejectionGoodIntercept.Variance)
+
+RejectionGoodIntercept.Lowerlimit <- InterceptsAndSlopes[21,4] - (1.96 * InterceptsAndSlopes[21,5])
+InterceptsAndSlopes[21,6] <- RejectionGoodIntercept.Lowerlimit
+
+RejectionGoodIntercept.Upperlimit <- InterceptsAndSlopes[21,4] + (1.96 * InterceptsAndSlopes[21,5])
+InterceptsAndSlopes[21,7] <- RejectionGoodIntercept.Upperlimit
+
+# Rejection         Good        Slope
+RejectionGoodSlope.Estimate <- coefficients_df[18,2] + coefficients_df[36,2]
+InterceptsAndSlopes[22,4] <- RejectionGoodSlope.Estimate
+
+RejectionGoodSlope.Variance <- (coefficients_df[18,3])^2 + (coefficients_df[36,3])^2
+InterceptsAndSlopes[22,5] <- sqrt(RejectionGoodSlope.Variance)
+
+RejectionGoodSlope.Lowerlimit <- InterceptsAndSlopes[22,4] - (1.96 * InterceptsAndSlopes[22,5])
+InterceptsAndSlopes[22,6] <- RejectionGoodSlope.Lowerlimit
+
+RejectionGoodSlope.Upperlimit <- InterceptsAndSlopes[22,4] + (1.96 * InterceptsAndSlopes[22,5])
+InterceptsAndSlopes[22,7] <- RejectionGoodSlope.Upperlimit
+
+# Rejection         None        Intercept
+RejectionNoneIntercept.Estimate <- coefficients_df[6,2]
+InterceptsAndSlopes[23,4] <- RejectionNoneIntercept.Estimate
+
+RejectionNoneIntercept.Variance <- (coefficients_df[6,3])^2
+InterceptsAndSlopes[23,5] <- sqrt(RejectionNoneIntercept.Variance)
+
+RejectionNoneIntercept.Lowerlimit <- InterceptsAndSlopes[23,4] - (1.96 * InterceptsAndSlopes[23,5])
+InterceptsAndSlopes[23,6] <- RejectionNoneIntercept.Lowerlimit
+
+RejectionNoneIntercept.Upperlimit <- InterceptsAndSlopes[23,4] + (1.96 * InterceptsAndSlopes[23,5])
+InterceptsAndSlopes[23,7] <- RejectionNoneIntercept.Upperlimit
+
+# Rejection         None        Slope
+RejectionNoneSlope.Estimate <- coefficients_df[18,2]
+InterceptsAndSlopes[24,4] <- RejectionNoneSlope.Estimate
+
+RejectionNoneSlope.Variance <- (coefficients_df[18,3])^2
+InterceptsAndSlopes[24,5] <- sqrt(RejectionNoneSlope.Variance)
+
+RejectionNoneSlope.Lowerlimit <- InterceptsAndSlopes[24,4] - (1.96 * InterceptsAndSlopes[24,5])
+InterceptsAndSlopes[24,6] <- RejectionNoneSlope.Lowerlimit
+
+RejectionNoneSlope.Upperlimit <- InterceptsAndSlopes[24,4] + (1.96 * InterceptsAndSlopes[24,5])
+InterceptsAndSlopes[24,7] <- RejectionNoneSlope.Upperlimit
+
+# Novel             Good        Intercept
+NovelGoodIntercept.Estimate <- coefficients_df[7,2] + coefficients_df[28,2]
+InterceptsAndSlopes[25,4] <- NovelGoodIntercept.Estimate
+
+NovelGoodIntercept.Variance <- (coefficients_df[7,3])^2 + (coefficients_df[28,3])^2
+InterceptsAndSlopes[25,5] <- sqrt(NovelGoodIntercept.Variance)
+
+NovelGoodIntercept.Lowerlimit <- InterceptsAndSlopes[25,4] - (1.96 * InterceptsAndSlopes[25,5])
+InterceptsAndSlopes[25,6] <- NovelGoodIntercept.Lowerlimit
+
+NovelGoodIntercept.Upperlimit <- InterceptsAndSlopes[25,4] + (1.96 * InterceptsAndSlopes[25,5])
+InterceptsAndSlopes[25,7] <- NovelGoodIntercept.Upperlimit
+
+# Novel             Good        Slope
+NovelGoodSlope.Estimate <- coefficients_df[19,2] + coefficients_df[37,2]
+InterceptsAndSlopes[26,4] <- NovelGoodSlope.Estimate
+
+NovelGoodSlope.Variance <- (coefficients_df[19,3])^2 + (coefficients_df[37,3])^2
+InterceptsAndSlopes[26,5] <- sqrt(NovelGoodSlope.Variance)
+
+NovelGoodSlope.Lowerlimit <- InterceptsAndSlopes[26,4] - (1.96 * InterceptsAndSlopes[26,5])
+InterceptsAndSlopes[26,6] <- NovelGoodSlope.Lowerlimit
+
+NovelGoodSlope.Upperlimit <- InterceptsAndSlopes[26,4] + (1.96 * InterceptsAndSlopes[26,5])
+InterceptsAndSlopes[26,7] <- NovelGoodSlope.Upperlimit
+
+# Novel             None        Intercept
+NovelNoneIntercept.Estimate <- coefficients_df[7,2]
+InterceptsAndSlopes[27,4] <- NovelNoneIntercept.Estimate
+
+NovelNoneIntercept.Variance <- (coefficients_df[7,3])^2
+InterceptsAndSlopes[27,5] <- sqrt(NovelNoneIntercept.Variance)
+
+NovelNoneIntercept.Lowerlimit <- InterceptsAndSlopes[27,4] - (1.96 * InterceptsAndSlopes[27,5])
+InterceptsAndSlopes[27,6] <- NovelNoneIntercept.Lowerlimit
+
+NovelNoneIntercept.Upperlimit <- InterceptsAndSlopes[27,4] + (1.96 * InterceptsAndSlopes[27,5])
+InterceptsAndSlopes[27,7] <- NovelNoneIntercept.Upperlimit
+
+# Novel             None        Slope
+NovelNoneSlope.Estimate <- coefficients_df[19,2]
+InterceptsAndSlopes[28,4] <- NovelNoneSlope.Estimate
+
+NovelNoneSlope.Variance <- (coefficients_df[19,3])^2
+InterceptsAndSlopes[28,5] <- sqrt(NovelNoneSlope.Variance)
+
+NovelNoneSlope.Lowerlimit <- InterceptsAndSlopes[28,4] - (1.96 * InterceptsAndSlopes[28,5])
+InterceptsAndSlopes[28,6] <- NovelNoneSlope.Lowerlimit
+
+NovelNoneSlope.Upperlimit <- InterceptsAndSlopes[28,4] + (1.96 * InterceptsAndSlopes[28,5])
+InterceptsAndSlopes[28,7] <- NovelNoneSlope.Upperlimit
+
+# Novel Transient   Good        Intercept
+NovelTransientGoodIntercept.Estimate <- coefficients_df[8,2] + coefficients_df[29,2]
+InterceptsAndSlopes[29,4] <- NovelTransientGoodIntercept.Estimate
+
+NovelTransientGoodIntercept.Variance <- (coefficients_df[8,3])^2 + (coefficients_df[29,3])^2
+InterceptsAndSlopes[29,5] <- sqrt(NovelTransientGoodIntercept.Variance)
+
+NovelTransientGoodIntercept.Lowerlimit <- InterceptsAndSlopes[29,4] - (1.96 * InterceptsAndSlopes[29,5])
+InterceptsAndSlopes[29,6] <- NovelTransientGoodIntercept.Lowerlimit
+
+NovelTransientGoodIntercept.Upperlimit <- InterceptsAndSlopes[29,4] + (1.96 * InterceptsAndSlopes[29,5])
+InterceptsAndSlopes[29,7] <- NovelTransientGoodIntercept.Upperlimit
+
+# Novel Transient   Good        Slope
+NovelTransientGoodSlope.Estimate <- coefficients_df[20,2] + coefficients_df[38,2]
+InterceptsAndSlopes[30,4] <- NovelTransientGoodSlope.Estimate
+
+NovelTransientGoodSlope.Variance <- (coefficients_df[20,3])^2 + (coefficients_df[38,3])^2
+InterceptsAndSlopes[30,5] <- sqrt(NovelTransientGoodSlope.Variance)
+
+NovelTransientGoodSlope.Lowerlimit <- InterceptsAndSlopes[30,4] - (1.96 * InterceptsAndSlopes[30,5])
+InterceptsAndSlopes[30,6] <- NovelTransientGoodSlope.Lowerlimit
+
+NovelTransientGoodSlope.Upperlimit <- InterceptsAndSlopes[30,4] + (1.96 * InterceptsAndSlopes[30,5])
+InterceptsAndSlopes[30,7] <- NovelTransientGoodSlope.Upperlimit
+
+# Novel Transient   None        Intercept
+NovelTransientNoneIntercept.Estimate <- coefficients_df[8,2]
+InterceptsAndSlopes[31,4] <- NovelTransientNoneIntercept.Estimate
+
+NovelTransientNoneIntercept.Variance <- (coefficients_df[8,3])^2
+InterceptsAndSlopes[31,5] <- sqrt(NovelTransientNoneIntercept.Variance)
+
+NovelTransientNoneIntercept.Lowerlimit <- InterceptsAndSlopes[31,4] - (1.96 * InterceptsAndSlopes[31,5])
+InterceptsAndSlopes[31,6] <- NovelTransientNoneIntercept.Lowerlimit
+
+NovelTransientNoneIntercept.Upperlimit <- InterceptsAndSlopes[31,4] + (1.96 * InterceptsAndSlopes[31,5])
+InterceptsAndSlopes[31,7] <- NovelTransientNoneIntercept.Upperlimit
+
+# Novel Transient   None        Slope
+NovelTransientNoneSlope.Estimate <- coefficients_df[20,2]
+InterceptsAndSlopes[32,4] <- NovelTransientNoneSlope.Estimate
+
+NovelTransientNoneSlope.Variance <- (coefficients_df[20,3])^2
+InterceptsAndSlopes[32,5] <-sqrt(NovelTransientNoneSlope.Variance)
+
+NovelTransientNoneSlope.Lowerlimit <- InterceptsAndSlopes[32,4] - (1.96 * InterceptsAndSlopes[32,5])
+InterceptsAndSlopes[32,6] <- NovelTransientNoneSlope.Lowerlimit
+
+NovelTransientNoneSlope.Upperlimit <- InterceptsAndSlopes[32,4] + (1.96 * InterceptsAndSlopes[32,5])
+InterceptsAndSlopes[32,7] <- NovelTransientNoneSlope.Upperlimit
+
+# Novel loss        Good        Intercept
+NovelLossGoodIntercept.Estimate <- coefficients_df[9,2] + coefficients_df[30,2]
+InterceptsAndSlopes[33,4] <- NovelLossGoodIntercept.Estimate
+
+NovelLossGoodIntercept.Variance <- (coefficients_df[9,2])^2 + (coefficients_df[30,2])^2
+InterceptsAndSlopes[33,5] <- sqrt(NovelLossGoodIntercept.Variance)
+
+NovelLossGoodIntercept.Lowerlimit <- InterceptsAndSlopes[33,4] - (1.96 * InterceptsAndSlopes[33,5])
+InterceptsAndSlopes[33,6] <- NovelLossGoodIntercept.Lowerlimit
+
+NovelLossGoodIntercept.Upperlimit <- InterceptsAndSlopes[33,4] + (1.96 * InterceptsAndSlopes[33,5])
+InterceptsAndSlopes[33,7] <- NovelLossGoodIntercept.Upperlimit
+
+# Novel loss        Good        Slope
+NovelLossGoodSlope.Estimate <- coefficients_df[21,2] + coefficients_df[39,2]
+InterceptsAndSlopes[34,4] <- NovelLossGoodSlope.Estimate
+
+NovelLossGoodSlope.Variance <- (coefficients_df[21,3])^2 + (coefficients_df[39,3])^2
+InterceptsAndSlopes[34,5] <- sqrt(NovelLossGoodSlope.Variance)
+
+NovelLossGoodSlope.Lowerlimit <- InterceptsAndSlopes[34,4] - (1.96 * InterceptsAndSlopes[34,5])
+InterceptsAndSlopes[34,6] <- NovelLossGoodSlope.Lowerlimit
+
+NovelLossGoodSlope.Upperlimit <- InterceptsAndSlopes[34,4] + (1.96 * InterceptsAndSlopes[34,5])
+InterceptsAndSlopes[34,7] <- NovelLossGoodSlope.Upperlimit
+
+# Novel loss        None        Intercept
+NovelLossNoneIntercept.Estimate <- coefficients_df[9,2]
+InterceptsAndSlopes[35,4] <- NovelLossNoneIntercept.Estimate
+
+NovelLossNoneIntercept.Variance <- (coefficients_df[9,3])^2
+InterceptsAndSlopes[35,5] <- sqrt(NovelLossNoneIntercept.Variance)
+
+NovelLossNoneIntercept.Lowerlimit <- InterceptsAndSlopes[35,4] - (1.96 * InterceptsAndSlopes[35,5])
+InterceptsAndSlopes[35,6] <- NovelLossNoneIntercept.Lowerlimit
+
+NovelLossNoneIntercept.Upperlimit <- InterceptsAndSlopes[35,4] + (1.96 * InterceptsAndSlopes[35,5])
+InterceptsAndSlopes[35,7] <- NovelLossNoneIntercept.Upperlimit
+
+# Novel loss        None        Slope
+NovelLossNoneSlope.Estimate <- coefficients_df[21,2]
+InterceptsAndSlopes[36,4] <- NovelLossNoneSlope.Estimate
+
+NovelLossNoneSlope.Variance <- (coefficients_df[21,3])^2
+InterceptsAndSlopes[36,5] <- sqrt(NovelLossNoneSlope.Variance)
+
+NovelLossNoneSlope.Lowerlimit <- InterceptsAndSlopes[36,4] - (1.96 * InterceptsAndSlopes[36,5])
+InterceptsAndSlopes[36,6] <- NovelLossNoneSlope.Lowerlimit
+
+NovelLossNoneSlope.Upperlimit <- InterceptsAndSlopes[36,4] + (1.96 * InterceptsAndSlopes[36,5])
+InterceptsAndSlopes[36,7] <- NovelLossNoneSlope.Upperlimit
+
+# Reorder levels of State and InterceptOrSlope
+InterceptsAndSlopes$State <- factor(InterceptsAndSlopes$State, levels = c("Non-responder", "Responder"))
+InterceptsAndSlopes$InterceptOrSlope <- factor(InterceptsAndSlopes$InterceptOrSlope, levels = c("Slope", "Intercept"))
+
+# Create a new column to represent the desired order
+InterceptsAndSlopes$Order <- factor(paste(InterceptsAndSlopes$State, InterceptsAndSlopes$InterceptOrSlope),
+                                   levels = c("Non-responder Slope", "Responder Slope", "Non-responder Intercept", "Responder Intercept" ))
+
+# Reorder levels of Category
+InterceptsAndSlopes$Category <- factor(InterceptsAndSlopes$Category, levels = c("Resident", "Host Transient", "Species loss", "Colonisation", "Donor Transient", "Rejection", "Novel", "Novel Transient", "Novel loss"))
+
+# Create the plot with the reordered levels and custom order
+gg <- ggplot(InterceptsAndSlopes, aes(x = Estimate, y = Order, color = State)) +
+  geom_point(position = position_dodge(width = 0.3), size = 3) +
+  geom_errorbarh(aes(xmin = `LowerLimit`, xmax = `UpperLimit`), position = position_dodge(width = 0.3),  linetype = 1, size = 1) +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black") +  # Add the vertical line
+  facet_wrap(Category ~ .) +
+  labs(
+    x = "Estimate",
+    y = "State + InterceptOrSlope",
+    color = "State"
+  ) + 
+  theme_bw() 
+
+print(gg)
+```
+
+# for the model with splines
+
+```{r}
+fixed_effects <- fixef(model.eco.scenario2.splines2)
+
+Scenario2.model$Patient_ID <- factor(Scenario2.model$Patient_ID )
+Scenario2.model$category <- factor(Scenario2.model$category)
+Scenario2.model$Donor <- factor(Scenario2.model$Donor)
+Scenario2.model$Pretreatment <- factor(Scenario2.model$Pretreatment)
+Scenario2.model$Sex <- factor(Scenario2.model$Sex)
+Scenario2.model$Age2 <- factor(Scenario2.model$Age2)
+
+plot_data <- expand.grid(Patient_ID = levels(Scenario2.model$Patient_ID), 
+                         time2 = seq(min(Scenario2.model$time2), max(Scenario2.model$time2), length.out = 100),
+                         # time = seq(min(Scenario2.model$time), max(Scenario2.model$time), length.out = 100),
+                         category = levels(Scenario2.model$category),
+                         State = levels(Scenario2.model$State),
+                         Donor = levels(Scenario2.model$Donor),
+                         Pretreatment = levels(Scenario2.model$Pretreatment),
+                         Sex = levels(Scenario2.model$Sex) #,
+                         #Age2 = seq(min(Scenario1.model$Age2), max(Scenario1.model$Age2), length.out = 10)
+                         )
+
+plot_data$Scenario2 <- predict(model.eco.scenario2.splines2, newdata = plot_data, type = "response", allow.new.levels = TRUE)
+
+Scenario2.model$category <- factor(Scenario2.model$category, levels = c( 'Resident', 'Host Transient', 'Species loss','Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+plot_data$category <- factor(plot_data$category, levels = c( 'Resident', 'Host Transient', 'Species loss','Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+
+Scenario2.model$category <- factor(Scenario2.model$category, levels = c('Resident', 'Host Transient', 'Species loss', 'Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+plot_data$category <- factor(plot_data$category, levels = c('Resident', 'Host Transient', 'Species loss', 'Colonisation', 'Donor Transient', 'Rejection', 'Novel', 'Novel Transient', 'Novel loss'))
+
+Scenario2.model$time <- Scenario2.model$time %>% as.numeric()
+
+ggplot(data = Scenario2.model, aes(x = time2, y = Scenario2, color = State)) +
+  geom_line(aes(group = Patient_ID), color="grey", alpha = 0.4) +
+  geom_point() +
+  #geom_line(data = plot_data, aes(x = time2, y = Scenario2),  size = 0.2, alpha = 0.2) +
+  geom_line(data = plot_data, aes(x = time2, y = Scenario2),  size = 1, stat = "summary", fun = mean, alpha = 1) +
+  labs(x = "Weeks since first FMT", y = "Count") +
+  theme_bw() +
+  scale_y_continuous(trans='log10') +
+  facet_wrap(~category) 
+  #+ scale_color_manual(
+   # breaks = c("Good", "None"),
+    #values = c("#82E0AA", "#EC7063")
+  #) 
+```
