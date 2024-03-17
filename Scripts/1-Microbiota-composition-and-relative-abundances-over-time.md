@@ -1,6 +1,6 @@
 Average Microbiota Compostition
 ================
-December 2022
+March 2024
 
 ## Load required packages
 
@@ -362,7 +362,7 @@ get_taxa_unique(physeq_mOTU.rel, "family")
     ## [93] "Verrucomicrobiafam.incertaesedis"                                            
     ## [94] "Akkermansiaceae"
 
-## Subset data and select core patient micorbiota
+## Subset data and select top 15 patient microbiota
 
 ``` r
 temp <- aggregate_top_taxa2( physeq_mOTU.rel, 15, "family" )
@@ -612,11 +612,6 @@ plot_composition_manual <- function (x, sample.sort = NULL, otu.sort = NULL, x.l
 ``` r
 # Choose colors
 mycolors <- colorRampPalette( brewer.pal( 8, "Set1" ))( 16 )
-
-# # pdonorA[["plot_env"]][["palette"]] # see below
-# mycolors <- c( "lightgrey", "#1F78B4", "#A6CEE3", "#33A02C", "#B2DF8A", "#E31A1C", "#FB9A99",
-#              "#FF7F00","#FDBF6F","#6A3D9A", "#CAB2D6", "#FFFF99", "#B15928", "#1B9E77",
-#              "#1ff8ff", "#D95F02"  )
 ```
 
 ``` r
@@ -632,18 +627,6 @@ pdonorA = plot_composition_manual( temp.donorA, average_by = "treated_with_donor
   labs( x = "Average", y = "Relative Abundance" ) + 
   scale_fill_manual( values = mycolors ) + 
   scale_x_discrete( labels = c( "Donor A" )) 
-
-# pdonorA = comp_barplot( merge_samples(temp.donorA, group = "treated_with_donor"), tax_level = "unique", n_taxa = 15) +
-#   theme( text = element_text(size = 20),
-#          legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
-#         # axis.text = element_text( size = 8 ),
-#         # axis.title.x = element_text( size = 8 ),
-#         panel.grid.major = element_blank(),
-#     panel.grid.minor = element_blank(),
-#     panel.background = element_blank(),
-#     axis.ticks = element_blank()) + 
-#   labs( x = "Average", y = "Relative Abundance" ) + 
-#   scale_x_discrete( labels = c( "Donor A" )) 
 
 pdonorB = plot_composition_manual( temp.donorB, average_by = "treated_with_donor" ) +
   theme( text = element_text(size = 20),
@@ -852,19 +835,6 @@ temp@otu_table %>% rownames()
 ``` r
 temp@tax_table[1,] <- "A_Other"
 taxa_names(temp) <- gsub(taxa_names(temp), pattern = "Other", replacement = "A_Other") 
-
-# Change names so the other category ends up in the bottom of the graph
-#rownames( temp@otu_table )[rownames( temp@otu_table ) == "Other"] <- "A_Other"
-#rownames( temp@tax_table )[rownames( temp@tax_table ) == "Other"] <- "A_Other"
-#temp = microbiome::merge_taxa2( temp, pattern = "Other", name = "A_Other" )
-# 
-#temp = merge_taxa2(temp, pattern = "Other", name = "A_Other")
-#taxa_names(temp)
-#temp@tax_table %>% rownames()
-
-# temp@otu_table %>% rownames()
-# temp@tax_table %>% rownames()
-# temp@tax_table
 
 temp
 ```
