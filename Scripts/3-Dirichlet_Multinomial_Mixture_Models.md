@@ -51,15 +51,15 @@ df.count = as.matrix( t( df ))
 Note that this function takes a long time to run.
 
 ``` r
-# all_clusters_1000 = list() # save all clusters
-# output_vector_1000 = list() # save best number of clusters
-# for ( i in ( 1:1000 )) {
-#   set.seed( i )
-#   all_clusters_one = lapply( 1:10, dmn, count = df.count, verbose = FALSE )
-#   all_clusters_1000[[ i ]] = all_clusters_one
-#   laplace.met = base::sapply( all_clusters_one, DirichletMultinomial::laplace )
-#   output_vector_1000[[ i ]] = all_clusters_one[[ which.min(unlist( laplace.met ))]]
-# }
+all_clusters_1000 = list() # save all clusters
+output_vector_1000 = list() # save best number of clusters
+for ( i in ( 1:1000 )) {
+  set.seed( i )
+  all_clusters_one = lapply( 1:10, dmn, count = df.count, verbose = FALSE )
+  all_clusters_1000[[ i ]] = all_clusters_one
+  laplace.met = base::sapply( all_clusters_one, DirichletMultinomial::laplace )
+  output_vector_1000[[ i ]] = all_clusters_one[[ which.min(unlist( laplace.met ))]]
+}
 ```
 
 ## Save results
