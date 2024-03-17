@@ -1,7 +1,8 @@
 ---
 title: "Simpson dominance"
-authors: "S. Pinto and D. Sajbenova"
-date: "March 2024"
+author: "S. Pinto and D. Sajbenova"
+
+date: "(March 2024)"
 output:
   github_document: default
   word_document: default

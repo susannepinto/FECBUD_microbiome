@@ -1,6 +1,7 @@
 Simpson dominance
 ================
-March 2024
+S. Pinto and D. Sajbenova
+(March 2024)
 
 ``` r
 library(microbiome)
