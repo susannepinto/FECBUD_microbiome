@@ -1,6 +1,6 @@
 Simpson dominance
 ================
-2023-11-12
+March 2024
 
 ``` r
 library(microbiome)
@@ -116,11 +116,6 @@ library(aod)
 ```
 
 ``` r
-#physeq = readRDS( "Data/FECBUD_physeq_filt_countdata.rds" )
-#physeq.rel = microbiome::transform(physeq, "compositional")
-#physeq.rel.prune = prune_samples(! sample_sums(physeq.rel) == 0, physeq.rel)
-
-# toegevoegd
 physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_relativeabundances.rds" ) 
 physeq.rel <- physeq_mOTU
 
@@ -136,22 +131,6 @@ physeq.rel.fam
 ``` r
 physeq.rel.fam = subset_samples(physeq.rel.fam, subject_id != "Donor A" )
 physeq.rel.fam = subset_samples(physeq.rel.fam, subject_id != "Donor B" )
-```
-
-``` r
-#physeq.rel.fam = merge_taxa2(physeq.rel.fam, pattern = "_Coriobacteriaceae", name = "Coriobacteriaceae")
-
-#physeq.rel.fam@sam_data$clinical_outcome_wk14 = gsub("Partial", "None", physeq.rel.fam@sam_data$clinical_outcome_wk14)
-
-#physeq.rel.fam@sam_data$clinical_outcome_wk14 = factor(physeq.rel.fam@sam_data$clinical_outcome_wk14, levels = c("None", "Good"))
-
-#physeq.rel.fam@sam_data$clinical_outcome_wk10[49:57] = "Good"
-#physeq.rel.fam@sam_data$clinical_outcome_wk10[78:86] = "None"
-
-#physeq.rel.fam@sam_data[["timepoint.new"]] = factor(physeq.rel.fam@sam_data[["timepoint.new"]],
-#levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
-
-#physeq.rel.fam@sam_data$pretreatment = factor(physeq.rel.fam@sam_data$pretreatment, levels = c("placebo", "budesonide"))
 ```
 
 ``` r
@@ -240,7 +219,7 @@ df.div$timepoint.new = as.numeric(df.div$timepoint.new)
 hist(df.div$simpson)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 df.div$simpson.new = log(df.div$simpson) # transformation to get closer to a normal distribution
@@ -248,7 +227,7 @@ df.div$simpson.new = log(df.div$simpson) # transformation to get closer to a nor
 hist(df.div$simpson.new)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
 
 ``` r
 library(nlme)
@@ -1057,49 +1036,49 @@ lme.simpson.diag = DHARMa::simulateResiduals(lme.slope.simpson)
 plot(lme.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 plotResiduals(lme.simpson.diag, form = df.div$clinical_outcome_wk14)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 plotResiduals(lme.simpson.diag, form = df.div$timepoint.new)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-3.png)<!-- -->
 
 ``` r
 plotResiduals(lme.simpson.diag, form = df.div$treated_with_donor)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-4.png)<!-- -->
 
 ``` r
 plotResiduals(lme.simpson.diag, form = df.div$sex)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-5.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-5.png)<!-- -->
 
 ``` r
 plotResiduals(lme.simpson.diag, form = df.div$age)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-6.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-6.png)<!-- -->
 
 ``` r
 plotResiduals(lme.simpson.diag, form = df.div$pretreatment)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-7.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-7.png)<!-- -->
 
 ``` r
 testDispersion(lme.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-8.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-9-8.png)<!-- -->
 
     ## 
     ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
@@ -1118,49 +1097,49 @@ lme.int.simpson.diag = DHARMa::simulateResiduals(lme.int.simpson)
 plot(lme.int.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$clinical_outcome_wk14)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$timepoint.new)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-3.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$treated_with_donor)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-4.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-4.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$sex)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-5.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-5.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$age)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-6.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-6.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$pretreatment)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-7.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-7.png)<!-- -->
 
 ``` r
 testDispersion(lme.int.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-11-8.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-10-8.png)<!-- -->
 
     ## 
     ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
@@ -1297,49 +1276,49 @@ lme.int.simpson.diag = DHARMa::simulateResiduals(lme.int.simpson)
 plot(lme.int.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$clinical_outcome_wk14)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$timepoint.new)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$treated_with_donor)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-4.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$sex)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-5.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-5.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$age)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-6.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-6.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$pretreatment)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-7.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-7.png)<!-- -->
 
 ``` r
 testDispersion(lme.int.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-15-8.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-14-8.png)<!-- -->
 
     ## 
     ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
@@ -1474,49 +1453,49 @@ lme.int.simpson.diag = DHARMa::simulateResiduals(lme.int.simpson)
 plot(lme.int.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$clinical_outcome_wk14)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-2.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$timepoint.new)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-3.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-3.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$treated_with_donor)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-4.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-4.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$sex)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-5.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-5.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$age)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-6.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-6.png)<!-- -->
 
 ``` r
 plotResiduals(lme.int.simpson.diag, form = df.div$pretreatment)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-7.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-7.png)<!-- -->
 
 ``` r
 testDispersion(lme.int.simpson.diag)
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-8.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-8.png)<!-- -->
 
     ## 
     ##  DHARMa nonparametric dispersion test via sd of residuals fitted vs.
@@ -1531,7 +1510,7 @@ output1 = recalculateResiduals(lme.int.simpson.diag, group=df.div$timepoint.new)
 testTemporalAutocorrelation(output1, time = unique(df.div$timepoint.new))
 ```
 
-![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-18-9.png)<!-- -->
+![](5--Simpson-Dominance_files/figure-gfm/unnamed-chunk-17-9.png)<!-- -->
 
     ## 
     ##  Durbin-Watson test

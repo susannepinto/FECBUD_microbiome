@@ -1,7 +1,7 @@
 ---
 title: "Simpson dominance"
 authors: "S. Pinto and D. Sajbenova"
-date: "2023-11-12"
+date: "March 2024"
 output:
   github_document: default
   word_document: default
@@ -28,11 +28,6 @@ library(aod)
 ```
 
 ```{r}
-#physeq = readRDS( "Data/FECBUD_physeq_filt_countdata.rds" )
-#physeq.rel = microbiome::transform(physeq, "compositional")
-#physeq.rel.prune = prune_samples(! sample_sums(physeq.rel) == 0, physeq.rel)
-
-# toegevoegd
 physeq_mOTU <- readRDS( "/Volumes/My Passport for Mac/FECBUD studie/FECBUD GitHub/Data/FECBUD_physeq_filt_relativeabundances.rds" ) 
 physeq.rel <- physeq_mOTU
 
@@ -43,23 +38,6 @@ physeq.rel.fam
 ```{r}
 physeq.rel.fam = subset_samples(physeq.rel.fam, subject_id != "Donor A" )
 physeq.rel.fam = subset_samples(physeq.rel.fam, subject_id != "Donor B" )
-```
-
-
-```{r}
-#physeq.rel.fam = merge_taxa2(physeq.rel.fam, pattern = "_Coriobacteriaceae", name = "Coriobacteriaceae")
-
-#physeq.rel.fam@sam_data$clinical_outcome_wk14 = gsub("Partial", "None", physeq.rel.fam@sam_data$clinical_outcome_wk14)
-
-#physeq.rel.fam@sam_data$clinical_outcome_wk14 = factor(physeq.rel.fam@sam_data$clinical_outcome_wk14, levels = c("None", "Good"))
-
-#physeq.rel.fam@sam_data$clinical_outcome_wk10[49:57] = "Good"
-#physeq.rel.fam@sam_data$clinical_outcome_wk10[78:86] = "None"
-
-#physeq.rel.fam@sam_data[["timepoint.new"]] = factor(physeq.rel.fam@sam_data[["timepoint.new"]],
-#levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
-
-#physeq.rel.fam@sam_data$pretreatment = factor(physeq.rel.fam@sam_data$pretreatment, levels = c("placebo", "budesonide"))
 ```
 
 ```{r}
