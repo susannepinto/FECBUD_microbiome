@@ -1,6 +1,6 @@
 Top 10 families Mixed models
 ================
-December 2022
+March 2024
 
 ## Load required packages
 
@@ -12720,11 +12720,16 @@ desired_order <- c(
 all_bacteria$term <- factor(all_bacteria$term, levels = desired_order)
 
 # Plot the ordered data
-dwplot(all_bacteria, dodge_size = 0.6, dot_args = list(size = 4) ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( text = element_text( size = 20 ), legend.title = element_blank()) + scale_color_manual(values=c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#E7861B"))
+# dwplot(all_bacteria, dodge_size = 0.6, dot_args = list(size = 4) ) + xlab( "Coefficient Estimate" ) + geom_vline( xintercept = 0, colour = "grey60", linetype = 2 ) + theme_bw() + theme( text = element_text( size = 20 ), legend.title = element_blank()) + scale_color_manual(values=c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#E7861B"))
+# # dev.off()
+
+# Plot the ordered data
+dwplot(all_bacteria, dodge_size = 0.6, dot_args = list(size = 4)) +
+  xlab("Coefficient Estimate") +
+  geom_vline(xintercept = 0, colour = "grey60", linetype = 2) +
+  theme_bw() +
+  theme(text = element_text(size = 14), legend.title = element_blank()) +
+  scale_color_manual(values = c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#E7861B"))
 ```
 
 ![](4--Mixed-models_files/figure-gfm/Coefficient%20Plot%20sign-1.png)<!-- -->
-
-``` r
-# dev.off()
-```
