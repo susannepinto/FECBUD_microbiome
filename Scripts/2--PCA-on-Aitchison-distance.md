@@ -1,7 +1,6 @@
 PCOA plot based on Aitchison distance
 ================
-S. Pinto and D. Sajbenova
-2023-11-12
+March 2024
 
 ## Load required packages
 
@@ -12,6 +11,8 @@ library( knitr )
 library( tidyverse )
 library( lattice )
 library( latticeExtra)
+library( gridExtra )
+library( grid )
 ```
 
 ``` r
@@ -32,28 +33,6 @@ library(microbiome)
 # Define the colors for patients
 library("viridis")
 library(tibble)
-```
-
-``` r
-library( dplyr )
-library( magrittr )
-library( knitr )
-library( tidyverse )
-library( lattice )
-library( latticeExtra)
-```
-
-``` r
-library( phyloseq )
-library( microbiome )
-library( microViz )
-library( ggplot2 )
-library( microbiomeutilities )
-library( RColorBrewer )
-library( patchwork )
-library( ggpubr )
-library( gridExtra )
-library( grid )
 ```
 
 ## Load the data

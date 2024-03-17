@@ -1,7 +1,7 @@
 ---
 title: "PCOA plot based on Aitchison distance"
 authors: "S. Pinto and D. Sajbenova"
-date: "2023-11-12"
+date: "March 2024"
 output:
   github_document: default
   word_document: default
@@ -22,6 +22,8 @@ library( knitr )
 library( tidyverse )
 library( lattice )
 library( latticeExtra)
+library( gridExtra )
+library( grid )
 ```
 
 ```{r Load packages 2, echo=TRUE, message=FALSE, warning=FALSE}
@@ -44,27 +46,6 @@ library("viridis")
 library(tibble)
 ```
 
-```{r Load packages 3, echo=TRUE, message=FALSE}
-library( dplyr )
-library( magrittr )
-library( knitr )
-library( tidyverse )
-library( lattice )
-library( latticeExtra)
-```
-
-```{r Load packages 4, echo=TRUE, message=FALSE, warning=FALSE}
-library( phyloseq )
-library( microbiome )
-library( microViz )
-library( ggplot2 )
-library( microbiomeutilities )
-library( RColorBrewer )
-library( patchwork )
-library( ggpubr )
-library( gridExtra )
-library( grid )
-```
 
 ## Load the data
 
