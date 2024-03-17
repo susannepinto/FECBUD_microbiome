@@ -1,0 +1,1886 @@
+Average Microbiota Compostition
+================
+December 2022
+
+## Load required packages
+
+``` r
+library( dplyr )
+library( magrittr )
+library( knitr )
+library( tidyverse )
+library( lattice )
+library( latticeExtra)
+```
+
+``` r
+library( phyloseq )
+library( microbiome )
+library( microViz )
+library( ggplot2 )
+library( microbiomeutilities )
+library( RColorBrewer )
+library( patchwork )
+library( ggpubr )
+library( gridExtra )
+library( grid )
+```
+
+## Load the data
+
+Here we use the relative abundance dataset.
+
+## Preprocessing of the data
+
+``` r
+# Make compositional
+physeq_mOTU.rel = microbiome::transform(physeq_mOTU, "compositional")
+
+# Aggregate to family level
+physeq_mOTU.rel = aggregate_taxa( physeq_mOTU.rel, "family" )
+physeq_mOTU.rel
+```
+
+    ## phyloseq-class experiment-level object
+    ## otu_table()   OTU Table:         [ 95 taxa and 207 samples ]
+    ## sample_data() Sample Data:       [ 207 samples by 17 sample variables ]
+    ## tax_table()   Taxonomy Table:    [ 95 taxa by 6 taxonomic ranks ]
+
+``` r
+get_taxa_unique(physeq_mOTU.rel, "family")
+```
+
+    ##  [1] "Actinobacteriafam.[Sanguibacteraceae/Actinomycetaceae/Promicromonosporaceae]"
+    ##  [2] "Actinobacteriafam.[Actinomycetaceae/Streptomycetaceae]"                      
+    ##  [3] "Actinomycetaceae"                                                            
+    ##  [4] "Bifidobacteriaceae"                                                          
+    ##  [5] "Corynebacteriaceae"                                                          
+    ##  [6] "Micrococcaceae"                                                              
+    ##  [7] "Atopobiaceae"                                                                
+    ##  [8] "Coriobacteriaceae"                                                           
+    ##  [9] "Coriobacterialesfam.incertaesedis"                                           
+    ## [10] "Coriobacteriiafam.incertaesedis"                                             
+    ## [11] "Eggerthellaceae"                                                             
+    ## [12] "Eggerthellalesfam.incertaesedis"                                             
+    ## [13] "Bacteriafam.[Lactobacillaceae/Rhodospirillaceae]"                            
+    ## [14] "Bacteriafam.incertaesedis"                                                   
+    ## [15] "Bacteroidaceae"                                                              
+    ## [16] "Bacteroidalesfam.[Porphyromonadaceae/Barnesiellaceae]"                       
+    ## [17] "Bacteroidalesfam.incertaesedis"                                              
+    ## [18] "Barnesiellaceae"                                                             
+    ## [19] "Muribaculaceae"                                                              
+    ## [20] "Odoribacteraceae"                                                            
+    ## [21] "Porphyromonadaceae"                                                          
+    ## [22] "Prevotellaceae"                                                              
+    ## [23] "Rikenellaceae"                                                               
+    ## [24] "Tannerellaceae"                                                              
+    ## [25] "Flavobacteriaceae"                                                           
+    ## [26] "Flavobacteriiafam.incertaesedis"                                             
+    ## [27] "Dehalococcoidalesfam.incertaesedis"                                          
+    ## [28] "Elusimicrobiafam.incertaesedis"                                              
+    ## [29] "Bacillalesfam.incertaesedis"                                                 
+    ## [30] "Staphylococcaceae"                                                           
+    ## [31] "Carnobacteriaceae"                                                           
+    ## [32] "Enterococcaceae"                                                             
+    ## [33] "Lactobacillaceae"                                                            
+    ## [34] "Leuconostocaceae"                                                            
+    ## [35] "Streptococcaceae"                                                            
+    ## [36] "Catabacteriaceae"                                                            
+    ## [37] "Christensenellaceae"                                                         
+    ## [38] "Clostridiaceae"                                                              
+    ## [39] "Clostridialesfam.[Clostridiaceae/Christensenellaceae]"                       
+    ## [40] "Clostridialesfam.[Clostridiaceae/Heliobacteriaceae]"                         
+    ## [41] "Clostridialesfam.[Clostridiaceae/Ruminococcaceae]"                           
+    ## [42] "Clostridialesfam.[Eubacteriaceae/Clostridiaceae]"                            
+    ## [43] "Clostridialesfam.[Eubacteriaceae/Ruminococcaceae]"                           
+    ## [44] "Clostridialesfam.[Lachnospiraceae/Clostridiaceae]"                           
+    ## [45] "Clostridialesfam.[Lachnospiraceae/Clostridiaceae/Ruminococcaceae]"           
+    ## [46] "Clostridialesfam.[Lachnospiraceae/Ruminococcaceae]"                          
+    ## [47] "Clostridialesfam.incertaesedis"                                              
+    ## [48] "ClostridialesFamilyXIII.IncertaeSedis"                                       
+    ## [49] "Eubacteriaceae"                                                              
+    ## [50] "Lachnospiraceae"                                                             
+    ## [51] "Oscillospiraceae"                                                            
+    ## [52] "Peptostreptococcaceae"                                                       
+    ## [53] "Ruminococcaceae"                                                             
+    ## [54] "Clostridiafam.incertaesedis"                                                 
+    ## [55] "Erysipelotrichaceae"                                                         
+    ## [56] "Firmicutesfam.[Lachnospiraceae/Lactobacillaceae]"                            
+    ## [57] "Firmicutesfam.[Erysipelotrichaceae/Clostridiaceae]"                          
+    ## [58] "Firmicutesfam.[Erysipelotrichaceae/Eubacteriaceae/Clostridiaceae]"           
+    ## [59] "Firmicutesfam.[Erysipelotrichaceae/Lachnospiraceae]"                         
+    ## [60] "Firmicutesfam.[Erysipelotrichaceae/Peptostreptococcaceae]"                   
+    ## [61] "Firmicutesfam.[Veillonellaceae/Ruminococcaceae]"                             
+    ## [62] "Firmicutesfam.[Carnobacteriaceae/Acidaminococcaceae]"                        
+    ## [63] "Firmicutesfam.incertaesedis"                                                 
+    ## [64] "Acidaminococcaceae"                                                          
+    ## [65] "Selenomonadaceae"                                                            
+    ## [66] "Veillonellaceae"                                                             
+    ## [67] "Peptoniphilaceae"                                                            
+    ## [68] "Fusobacteriaceae"                                                            
+    ## [69] "Leptotrichiaceae"                                                            
+    ## [70] "Lentisphaeraefam.incertaesedis"                                              
+    ## [71] "Alphaproteobacteriafam.incertaesedis"                                        
+    ## [72] "Acetobacteraceae"                                                            
+    ## [73] "Rhodospirillaceae"                                                           
+    ## [74] "Burkholderialesfam.incertaesedis"                                            
+    ## [75] "Comamonadaceae"                                                              
+    ## [76] "Oxalobacteraceae"                                                            
+    ## [77] "Sutterellaceae"                                                              
+    ## [78] "Neisseriaceae"                                                               
+    ## [79] "Desulfovibrionaceae"                                                         
+    ## [80] "Myxococcaceae"                                                               
+    ## [81] "Campylobacteraceae"                                                          
+    ## [82] "Enterobacteriaceae"                                                          
+    ## [83] "Hafniaceae"                                                                  
+    ## [84] "Morganellaceae"                                                              
+    ## [85] "Pasteurellaceae"                                                             
+    ## [86] "Moraxellaceae"                                                               
+    ## [87] "Pseudomonadaceae"                                                            
+    ## [88] "Proteobacteriafam.incertaesedis"                                             
+    ## [89] "Brachyspiraceae"                                                             
+    ## [90] "Synergistaceae"                                                              
+    ## [91] "Mollicutesfam.incertaesedis"                                                 
+    ## [92] "Mycoplasmataceae"                                                            
+    ## [93] "Verrucomicrobiafam.incertaesedis"                                            
+    ## [94] "Akkermansiaceae"
+
+``` r
+# there was a change in family name
+# Identify the family to be changed and change the name
+family_to_change <- 'Firmicutesfam.incertaesedis'
+new_family_name <- 'Bacillotafam.incertaededis'
+
+# Check the current taxonomy
+get_taxa_unique(physeq_mOTU.rel, "family")
+```
+
+    ##  [1] "Actinobacteriafam.[Sanguibacteraceae/Actinomycetaceae/Promicromonosporaceae]"
+    ##  [2] "Actinobacteriafam.[Actinomycetaceae/Streptomycetaceae]"                      
+    ##  [3] "Actinomycetaceae"                                                            
+    ##  [4] "Bifidobacteriaceae"                                                          
+    ##  [5] "Corynebacteriaceae"                                                          
+    ##  [6] "Micrococcaceae"                                                              
+    ##  [7] "Atopobiaceae"                                                                
+    ##  [8] "Coriobacteriaceae"                                                           
+    ##  [9] "Coriobacterialesfam.incertaesedis"                                           
+    ## [10] "Coriobacteriiafam.incertaesedis"                                             
+    ## [11] "Eggerthellaceae"                                                             
+    ## [12] "Eggerthellalesfam.incertaesedis"                                             
+    ## [13] "Bacteriafam.[Lactobacillaceae/Rhodospirillaceae]"                            
+    ## [14] "Bacteriafam.incertaesedis"                                                   
+    ## [15] "Bacteroidaceae"                                                              
+    ## [16] "Bacteroidalesfam.[Porphyromonadaceae/Barnesiellaceae]"                       
+    ## [17] "Bacteroidalesfam.incertaesedis"                                              
+    ## [18] "Barnesiellaceae"                                                             
+    ## [19] "Muribaculaceae"                                                              
+    ## [20] "Odoribacteraceae"                                                            
+    ## [21] "Porphyromonadaceae"                                                          
+    ## [22] "Prevotellaceae"                                                              
+    ## [23] "Rikenellaceae"                                                               
+    ## [24] "Tannerellaceae"                                                              
+    ## [25] "Flavobacteriaceae"                                                           
+    ## [26] "Flavobacteriiafam.incertaesedis"                                             
+    ## [27] "Dehalococcoidalesfam.incertaesedis"                                          
+    ## [28] "Elusimicrobiafam.incertaesedis"                                              
+    ## [29] "Bacillalesfam.incertaesedis"                                                 
+    ## [30] "Staphylococcaceae"                                                           
+    ## [31] "Carnobacteriaceae"                                                           
+    ## [32] "Enterococcaceae"                                                             
+    ## [33] "Lactobacillaceae"                                                            
+    ## [34] "Leuconostocaceae"                                                            
+    ## [35] "Streptococcaceae"                                                            
+    ## [36] "Catabacteriaceae"                                                            
+    ## [37] "Christensenellaceae"                                                         
+    ## [38] "Clostridiaceae"                                                              
+    ## [39] "Clostridialesfam.[Clostridiaceae/Christensenellaceae]"                       
+    ## [40] "Clostridialesfam.[Clostridiaceae/Heliobacteriaceae]"                         
+    ## [41] "Clostridialesfam.[Clostridiaceae/Ruminococcaceae]"                           
+    ## [42] "Clostridialesfam.[Eubacteriaceae/Clostridiaceae]"                            
+    ## [43] "Clostridialesfam.[Eubacteriaceae/Ruminococcaceae]"                           
+    ## [44] "Clostridialesfam.[Lachnospiraceae/Clostridiaceae]"                           
+    ## [45] "Clostridialesfam.[Lachnospiraceae/Clostridiaceae/Ruminococcaceae]"           
+    ## [46] "Clostridialesfam.[Lachnospiraceae/Ruminococcaceae]"                          
+    ## [47] "Clostridialesfam.incertaesedis"                                              
+    ## [48] "ClostridialesFamilyXIII.IncertaeSedis"                                       
+    ## [49] "Eubacteriaceae"                                                              
+    ## [50] "Lachnospiraceae"                                                             
+    ## [51] "Oscillospiraceae"                                                            
+    ## [52] "Peptostreptococcaceae"                                                       
+    ## [53] "Ruminococcaceae"                                                             
+    ## [54] "Clostridiafam.incertaesedis"                                                 
+    ## [55] "Erysipelotrichaceae"                                                         
+    ## [56] "Firmicutesfam.[Lachnospiraceae/Lactobacillaceae]"                            
+    ## [57] "Firmicutesfam.[Erysipelotrichaceae/Clostridiaceae]"                          
+    ## [58] "Firmicutesfam.[Erysipelotrichaceae/Eubacteriaceae/Clostridiaceae]"           
+    ## [59] "Firmicutesfam.[Erysipelotrichaceae/Lachnospiraceae]"                         
+    ## [60] "Firmicutesfam.[Erysipelotrichaceae/Peptostreptococcaceae]"                   
+    ## [61] "Firmicutesfam.[Veillonellaceae/Ruminococcaceae]"                             
+    ## [62] "Firmicutesfam.[Carnobacteriaceae/Acidaminococcaceae]"                        
+    ## [63] "Firmicutesfam.incertaesedis"                                                 
+    ## [64] "Acidaminococcaceae"                                                          
+    ## [65] "Selenomonadaceae"                                                            
+    ## [66] "Veillonellaceae"                                                             
+    ## [67] "Peptoniphilaceae"                                                            
+    ## [68] "Fusobacteriaceae"                                                            
+    ## [69] "Leptotrichiaceae"                                                            
+    ## [70] "Lentisphaeraefam.incertaesedis"                                              
+    ## [71] "Alphaproteobacteriafam.incertaesedis"                                        
+    ## [72] "Acetobacteraceae"                                                            
+    ## [73] "Rhodospirillaceae"                                                           
+    ## [74] "Burkholderialesfam.incertaesedis"                                            
+    ## [75] "Comamonadaceae"                                                              
+    ## [76] "Oxalobacteraceae"                                                            
+    ## [77] "Sutterellaceae"                                                              
+    ## [78] "Neisseriaceae"                                                               
+    ## [79] "Desulfovibrionaceae"                                                         
+    ## [80] "Myxococcaceae"                                                               
+    ## [81] "Campylobacteraceae"                                                          
+    ## [82] "Enterobacteriaceae"                                                          
+    ## [83] "Hafniaceae"                                                                  
+    ## [84] "Morganellaceae"                                                              
+    ## [85] "Pasteurellaceae"                                                             
+    ## [86] "Moraxellaceae"                                                               
+    ## [87] "Pseudomonadaceae"                                                            
+    ## [88] "Proteobacteriafam.incertaesedis"                                             
+    ## [89] "Brachyspiraceae"                                                             
+    ## [90] "Synergistaceae"                                                              
+    ## [91] "Mollicutesfam.incertaesedis"                                                 
+    ## [92] "Mycoplasmataceae"                                                            
+    ## [93] "Verrucomicrobiafam.incertaesedis"                                            
+    ## [94] "Akkermansiaceae"
+
+``` r
+# Get the taxonomy table
+tax_table_physeq <- tax_table(physeq_mOTU.rel)
+
+# Identify rows to change based on logical condition
+rows_to_change <- tax_table_physeq[, 'family'] == family_to_change
+
+# Modify the taxonomy table
+tax_table_physeq[rows_to_change, 'family'] <- new_family_name
+
+# Assign the modified taxonomy table back to the physeq object
+tax_table(physeq_mOTU.rel) <- tax_table_physeq
+
+# Check the updated taxonomy
+get_taxa_unique(physeq_mOTU.rel, "family")
+```
+
+    ##  [1] "Actinobacteriafam.[Sanguibacteraceae/Actinomycetaceae/Promicromonosporaceae]"
+    ##  [2] "Actinobacteriafam.[Actinomycetaceae/Streptomycetaceae]"                      
+    ##  [3] "Actinomycetaceae"                                                            
+    ##  [4] "Bifidobacteriaceae"                                                          
+    ##  [5] "Corynebacteriaceae"                                                          
+    ##  [6] "Micrococcaceae"                                                              
+    ##  [7] "Atopobiaceae"                                                                
+    ##  [8] "Coriobacteriaceae"                                                           
+    ##  [9] "Coriobacterialesfam.incertaesedis"                                           
+    ## [10] "Coriobacteriiafam.incertaesedis"                                             
+    ## [11] "Eggerthellaceae"                                                             
+    ## [12] "Eggerthellalesfam.incertaesedis"                                             
+    ## [13] "Bacteriafam.[Lactobacillaceae/Rhodospirillaceae]"                            
+    ## [14] "Bacteriafam.incertaesedis"                                                   
+    ## [15] "Bacteroidaceae"                                                              
+    ## [16] "Bacteroidalesfam.[Porphyromonadaceae/Barnesiellaceae]"                       
+    ## [17] "Bacteroidalesfam.incertaesedis"                                              
+    ## [18] "Barnesiellaceae"                                                             
+    ## [19] "Muribaculaceae"                                                              
+    ## [20] "Odoribacteraceae"                                                            
+    ## [21] "Porphyromonadaceae"                                                          
+    ## [22] "Prevotellaceae"                                                              
+    ## [23] "Rikenellaceae"                                                               
+    ## [24] "Tannerellaceae"                                                              
+    ## [25] "Flavobacteriaceae"                                                           
+    ## [26] "Flavobacteriiafam.incertaesedis"                                             
+    ## [27] "Dehalococcoidalesfam.incertaesedis"                                          
+    ## [28] "Elusimicrobiafam.incertaesedis"                                              
+    ## [29] "Bacillalesfam.incertaesedis"                                                 
+    ## [30] "Staphylococcaceae"                                                           
+    ## [31] "Carnobacteriaceae"                                                           
+    ## [32] "Enterococcaceae"                                                             
+    ## [33] "Lactobacillaceae"                                                            
+    ## [34] "Leuconostocaceae"                                                            
+    ## [35] "Streptococcaceae"                                                            
+    ## [36] "Catabacteriaceae"                                                            
+    ## [37] "Christensenellaceae"                                                         
+    ## [38] "Clostridiaceae"                                                              
+    ## [39] "Clostridialesfam.[Clostridiaceae/Christensenellaceae]"                       
+    ## [40] "Clostridialesfam.[Clostridiaceae/Heliobacteriaceae]"                         
+    ## [41] "Clostridialesfam.[Clostridiaceae/Ruminococcaceae]"                           
+    ## [42] "Clostridialesfam.[Eubacteriaceae/Clostridiaceae]"                            
+    ## [43] "Clostridialesfam.[Eubacteriaceae/Ruminococcaceae]"                           
+    ## [44] "Clostridialesfam.[Lachnospiraceae/Clostridiaceae]"                           
+    ## [45] "Clostridialesfam.[Lachnospiraceae/Clostridiaceae/Ruminococcaceae]"           
+    ## [46] "Clostridialesfam.[Lachnospiraceae/Ruminococcaceae]"                          
+    ## [47] "Clostridialesfam.incertaesedis"                                              
+    ## [48] "ClostridialesFamilyXIII.IncertaeSedis"                                       
+    ## [49] "Eubacteriaceae"                                                              
+    ## [50] "Lachnospiraceae"                                                             
+    ## [51] "Oscillospiraceae"                                                            
+    ## [52] "Peptostreptococcaceae"                                                       
+    ## [53] "Ruminococcaceae"                                                             
+    ## [54] "Clostridiafam.incertaesedis"                                                 
+    ## [55] "Erysipelotrichaceae"                                                         
+    ## [56] "Firmicutesfam.[Lachnospiraceae/Lactobacillaceae]"                            
+    ## [57] "Firmicutesfam.[Erysipelotrichaceae/Clostridiaceae]"                          
+    ## [58] "Firmicutesfam.[Erysipelotrichaceae/Eubacteriaceae/Clostridiaceae]"           
+    ## [59] "Firmicutesfam.[Erysipelotrichaceae/Lachnospiraceae]"                         
+    ## [60] "Firmicutesfam.[Erysipelotrichaceae/Peptostreptococcaceae]"                   
+    ## [61] "Firmicutesfam.[Veillonellaceae/Ruminococcaceae]"                             
+    ## [62] "Firmicutesfam.[Carnobacteriaceae/Acidaminococcaceae]"                        
+    ## [63] "Bacillotafam.incertaededis"                                                  
+    ## [64] "Acidaminococcaceae"                                                          
+    ## [65] "Selenomonadaceae"                                                            
+    ## [66] "Veillonellaceae"                                                             
+    ## [67] "Peptoniphilaceae"                                                            
+    ## [68] "Fusobacteriaceae"                                                            
+    ## [69] "Leptotrichiaceae"                                                            
+    ## [70] "Lentisphaeraefam.incertaesedis"                                              
+    ## [71] "Alphaproteobacteriafam.incertaesedis"                                        
+    ## [72] "Acetobacteraceae"                                                            
+    ## [73] "Rhodospirillaceae"                                                           
+    ## [74] "Burkholderialesfam.incertaesedis"                                            
+    ## [75] "Comamonadaceae"                                                              
+    ## [76] "Oxalobacteraceae"                                                            
+    ## [77] "Sutterellaceae"                                                              
+    ## [78] "Neisseriaceae"                                                               
+    ## [79] "Desulfovibrionaceae"                                                         
+    ## [80] "Myxococcaceae"                                                               
+    ## [81] "Campylobacteraceae"                                                          
+    ## [82] "Enterobacteriaceae"                                                          
+    ## [83] "Hafniaceae"                                                                  
+    ## [84] "Morganellaceae"                                                              
+    ## [85] "Pasteurellaceae"                                                             
+    ## [86] "Moraxellaceae"                                                               
+    ## [87] "Pseudomonadaceae"                                                            
+    ## [88] "Proteobacteriafam.incertaesedis"                                             
+    ## [89] "Brachyspiraceae"                                                             
+    ## [90] "Synergistaceae"                                                              
+    ## [91] "Mollicutesfam.incertaesedis"                                                 
+    ## [92] "Mycoplasmataceae"                                                            
+    ## [93] "Verrucomicrobiafam.incertaesedis"                                            
+    ## [94] "Akkermansiaceae"
+
+## Subset data and select core patient micorbiota
+
+``` r
+temp <- aggregate_top_taxa2( physeq_mOTU.rel, 15, "family" )
+temp@otu_table %>% rownames()
+```
+
+    ##  [1] "Bacillotafam.incertaededis"     "Bacteroidaceae"                
+    ##  [3] "Bacteroidalesfam.incertaesedis" "Bifidobacteriaceae"            
+    ##  [5] "Clostridiaceae"                 "Clostridialesfam.incertaesedis"
+    ##  [7] "Coriobacteriaceae"              "Eubacteriaceae"                
+    ##  [9] "Lachnospiraceae"                "Oscillospiraceae"              
+    ## [11] "Other"                          "Prevotellaceae"                
+    ## [13] "Rikenellaceae"                  "Ruminococcaceae"               
+    ## [15] "Sutterellaceae"                 "Veillonellaceae"
+
+``` r
+temp@otu_table <- temp@otu_table[ c( 11, 1:10, 12:16 ), ]
+
+temp@tax_table %>% rownames()
+```
+
+    ##  [1] "Bacillotafam.incertaededis"     "Bacteroidaceae"                
+    ##  [3] "Bacteroidalesfam.incertaesedis" "Bifidobacteriaceae"            
+    ##  [5] "Clostridiaceae"                 "Clostridialesfam.incertaesedis"
+    ##  [7] "Coriobacteriaceae"              "Eubacteriaceae"                
+    ##  [9] "Lachnospiraceae"                "Oscillospiraceae"              
+    ## [11] "Other"                          "Prevotellaceae"                
+    ## [13] "Rikenellaceae"                  "Ruminococcaceae"               
+    ## [15] "Sutterellaceae"                 "Veillonellaceae"
+
+``` r
+temp@tax_table <- temp@tax_table[ c( 11, 1:10, 12:16 ), ]
+
+temp
+```
+
+    ## phyloseq-class experiment-level object
+    ## otu_table()   OTU Table:         [ 16 taxa and 207 samples ]
+    ## sample_data() Sample Data:       [ 207 samples by 17 sample variables ]
+    ## tax_table()   Taxonomy Table:    [ 16 taxa by 2 taxonomic ranks ]
+
+``` r
+temp.donorA = temp %>%
+  ps_filter( subject_id == "Donor A", .keep_all_taxa = TRUE )
+
+temp.donorA@sam_data[[ "timepoint.new" ]] <- temp.donorA@sam_data[[ "timepoint.new" ]] %>% as.factor()
+temp.donorA@sam_data[[ "timepoint.new" ]] <- factor( temp.donorA@sam_data[[ "timepoint.new" ]], levels = c( "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"  ))
+
+temp.donorB = temp %>%
+  ps_filter( subject_id == "Donor B", .keep_all_taxa = TRUE )
+
+temp.donorB@sam_data[[ "timepoint.new" ]] <- temp.donorB@sam_data[[ "timepoint.new" ]] %>% as.factor()
+temp.donorB@sam_data[[ "timepoint.new" ]] <- factor( temp.donorB@sam_data[[ "timepoint.new" ]], levels = c( "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"  ))
+
+temp.base = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Baseline", .keep_all_taxa = TRUE )
+
+temp.fmt1 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Pre-FMT", .keep_all_taxa = TRUE ) 
+
+temp.fmt2 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Post-1", .keep_all_taxa = TRUE ) 
+
+temp.fmt3 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Post-2", .keep_all_taxa = TRUE )
+
+temp.fmt4 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Post-3", .keep_all_taxa = TRUE )
+
+temp.wk7 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Post-4", .keep_all_taxa = TRUE )
+
+temp.wk8 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Week8", .keep_all_taxa = TRUE )
+
+temp.wk10 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Week10", .keep_all_taxa = TRUE )
+
+temp.wk14 = temp %>%
+  ps_select( clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( timepoint.new == "Week14", .keep_all_taxa = TRUE )
+```
+
+## Average plots per timepoint
+
+``` r
+# I changed teh composition plot functions to get a black outline
+make_barplot1_manual <- function (dfm, group_by) 
+{
+  Tax <- Sample <- Abundance <- NULL
+  dfm <- dfm %>% arrange(Tax)
+  dfm$Tax <- factor(dfm$Tax, levels = unique(dfm$Tax))
+  p <- ggplot(dfm, aes(x = Sample, y = Abundance, fill = Tax, colour = "Black")) + 
+    geom_bar(position = "stack", stat = "identity", colour = "Black") + scale_x_discrete(labels = dfm$xlabel, 
+                                                                       breaks = dfm$Sample)
+  p <- p + labs(y = "Abundance")
+  p <- p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, 
+                                            hjust = 0))
+  p <- p + guides(fill = guide_legend(reverse = FALSE))
+  if (!is.null(group_by)) {
+    p <- p + facet_grid(. ~ Group, drop = TRUE, space = "free", 
+                        scales = "free")
+  }
+  p
+}
+
+
+plot_composition_manual <- function (x, sample.sort = NULL, otu.sort = NULL, x.label = "sample", 
+          plot.type = "barplot", verbose = FALSE, average_by = NULL, 
+          group_by = NULL, ...) 
+{
+  Sample <- Abundance <- Taxon <- Group <- Tax <- horiz <- value <- scales <- ID <- meta <- OTU <- taxic <- otu.df <- taxmat <- new.tax <- NULL
+  if (!is.null(x@phy_tree)) {
+    x@phy_tree <- NULL
+  }
+  xorig <- x
+  if (verbose) {
+    message("Pick the abundance matrix taxa x samples")
+  }
+  abu <- abundances(x)
+  if (verbose) {
+    message("Average the samples by group")
+  }
+  group <- NULL
+  if (!is.null(average_by)) {
+    dff <- as.data.frame(t(abu))
+    dff$group <- sample_data(x)[[average_by]]
+    if (is.numeric(dff$group) || is.character(dff$group)) {
+      dff$group <- factor(dff$group, levels = sort(unique(dff$group)))
+    }
+    dff <- dff %>% filter(!is.na(group))
+    dff$group <- droplevels(dff$group)
+    av <- aggregate(. ~ group, data = dff, mean)
+    rownames(av) <- as.character(av$group)
+    av$group <- NULL
+    abu <- t(av)
+  }
+  if (verbose) {
+    message("Sort samples")
+  }
+  if (is.null(sample.sort) || sample.sort == "none" || !is.null(average_by)) {
+    sample.sort <- colnames(abu)
+  }
+  else if (length(sample.sort) == 1 && sample.sort %in% taxa(xorig)) {
+    tax <- sample.sort
+    sample.sort <- rev(sample_names(x)[order(abundances(x)[tax, 
+    ])])
+  }
+  else if (length(sample.sort) == 1 && sample.sort %in% names(sample_data(x)) && 
+           is.null(average_by)) {
+    sample.sort <- rownames(sample_data(x))[order(sample_data(x)[[sample.sort]])]
+  }
+  else if (all(sample.sort %in% sample_names(x)) & is.null(average_by)) {
+    sample.sort <- sample.sort
+  }
+  else if (length(sample.sort) == 1 && sample.sort == "neatmap") {
+    sample.sort <- neatsort(x, method = "NMDS", distance = "bray", 
+                            target = "sites", first = NULL)
+  }
+  else if (is.vector(sample.sort) && length(sample.sort) > 
+           1) {
+    sample.sort <- sample_names(x)[sample.sort]
+  }
+  else if (!sample.sort %in% names(sample_data(x))) {
+    warning(paste("The sample.sort argument", sample.sort, 
+                  "is not included in sample_data(x). \n            Using original sample ordering."))
+    sample.sort <- sample_names(x)
+  }
+  if (is.null(otu.sort) || otu.sort == "none") {
+    otu.sort <- taxa(x)
+  }
+  else if (length(otu.sort) == 1 && otu.sort == "abundance2") {
+    otu.sort <- rev(c(rev(names(sort(rowSums(abu)))[seq(1, 
+                                                        nrow(abu), 2)]), names(sort(rowSums(abu)))[seq(2, 
+                                                                                                       nrow(abu), 2)]))
+  }
+  else if (length(otu.sort) == 1 && otu.sort == "abundance") {
+    otu.sort <- rev(names(sort(rowSums(abu))))
+  }
+  else if (length(otu.sort) == 1 && otu.sort %in% colnames(tax_table(x))) {
+    otu.sort <- rownames(sample_data(x))[order(tax_table(x)[[otu.sort]])]
+  }
+  else if (all(otu.sort %in% taxa(x))) {
+    otu.sort <- otu.sort
+  }
+  else if (length(otu.sort) == 1 && otu.sort == "neatmap") {
+    otu.sort <- neatsort(x, method = "NMDS", distance = "bray", 
+                         target = "species", first = NULL)
+  }
+  dfm <- psmelt(otu_table(abu, taxa_are_rows = TRUE))
+  names(dfm) <- c("Tax", "Sample", "Abundance")
+  dfm$Sample <- factor(dfm$Sample, levels = sample.sort)
+  dfm$Tax <- factor(dfm$Tax, levels = otu.sort)
+  if (!is.null(group_by)) {
+    if (!is.null(average_by)) {
+      dfm$Group <- meta(x)[[group_by]][match(as.character(dfm$Sample), 
+                                             meta(x)[[average_by]])]
+    }
+    else {
+      dfm$Group <- meta(x)[[group_by]][match(as.character(dfm$Sample), 
+                                             sample_names(x))]
+    }
+  }
+  if (x.label %in% colnames(sample_data(x)) & is.null(average_by)) {
+    meta <- sample_data(x)
+    dfm$xlabel <- as.vector(unlist(meta[as.character(dfm$Sample), 
+                                        x.label]))
+    if (is.factor(meta[, x.label])) {
+      lev <- levels(meta[, x.label])
+    }
+    else {
+      lev <- unique(as.character(unname(unlist(meta[, 
+                                                    x.label]))))
+    }
+    dfm$xlabel <- factor(dfm$xlabel, levels = lev)
+  }
+  else {
+    dfm$xlabel <- dfm$Sample
+  }
+  if (verbose) {
+    message("Construct the plots")
+  }
+  if (plot.type == "barplot") {
+    p <- make_barplot1_manual(dfm, group_by)
+  }
+  else if (plot.type == "heatmap") {
+    p <- make_heatmap1(x, otu.sort, sample.sort, verbose)
+  }
+  else if (plot.type == "lineplot") {
+    p <- make_lineplot1(dfm)
+  }
+  else {
+    stop("plot.type argument not recognized")
+  }
+  p
+}
+```
+
+``` r
+# Choose colors
+mycolors <- colorRampPalette( brewer.pal( 8, "Set1" ))( 16 )
+
+# # pdonorA[["plot_env"]][["palette"]] # see below
+# mycolors <- c( "lightgrey", "#1F78B4", "#A6CEE3", "#33A02C", "#B2DF8A", "#E31A1C", "#FB9A99",
+#              "#FF7F00","#FDBF6F","#6A3D9A", "#CAB2D6", "#FFFF99", "#B15928", "#1B9E77",
+#              "#1ff8ff", "#D95F02"  )
+```
+
+``` r
+pdonorA = plot_composition_manual( temp.donorA, average_by = "treated_with_donor" ) +
+  theme( text = element_text(size = 20),
+         legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        # axis.text = element_text( size = 8 ),
+        # axis.title.x = element_text( size = 8 ),
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Average", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "Donor A" )) 
+
+# pdonorA = comp_barplot( merge_samples(temp.donorA, group = "treated_with_donor"), tax_level = "unique", n_taxa = 15) +
+#   theme( text = element_text(size = 20),
+#          legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+#         # axis.text = element_text( size = 8 ),
+#         # axis.title.x = element_text( size = 8 ),
+#         panel.grid.major = element_blank(),
+#     panel.grid.minor = element_blank(),
+#     panel.background = element_blank(),
+#     axis.ticks = element_blank()) + 
+#   labs( x = "Average", y = "Relative Abundance" ) + 
+#   scale_x_discrete( labels = c( "Donor A" )) 
+
+pdonorB = plot_composition_manual( temp.donorB, average_by = "treated_with_donor" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_line( "white" ),
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Average", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "Donor B" ))
+
+p1 = plot_composition_manual( temp.base, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_line( "white" ),
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Baseline", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+
+p2 = plot_composition_manual( temp.fmt1, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_line( "white" ),
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Pre-FMT" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+# + theme( aspect.ratio = 2/1 )
+
+p3 = plot_composition_manual( temp.fmt2, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text(size = 8),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Post-1" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+# + theme(aspect.ratio = 2/1)
+
+p4 = plot_composition_manual( temp.fmt3, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text( size = 8 ),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Post-2" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete(labels=c( "NR", "R" )) 
+# + theme( aspect.ratio = 2/1 ) 
+
+p5 = plot_composition_manual( temp.fmt4, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text( size = 8 ),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Post-3" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+# + theme( aspect.ratio = 2/1 )
+
+p6 = plot_composition_manual( temp.wk7, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text( size = 8 ),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Post-4" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+# + theme( aspect.ratio = 2/1 )
+ 
+p7 = plot_composition_manual( temp.wk8, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x=element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text( size = 8 ),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Week 8" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+# + theme( aspect.ratio = 2/1 )
+
+p8 = plot_composition_manual( temp.wk10, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank(),
+        # axis.title.x = element_text( size = 8 ),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Week 10" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" ))  
+# + theme( aspect.ratio = 2/1 ) 
+
+p9 = plot_composition_manual( temp.wk14, average_by = "clinical_outcome_wk14" ) +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        #legend.text = element_text( face = "italic" ),
+        axis.title.y = element_blank(), 
+        axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        # axis.title.x = element_text( size = 12 ),
+        legend.title = element_blank(),  
+        # legend.key.height = unit( 0.5, "cm" ), 
+        # legend.key.width = unit( 0.5, "cm" ),
+         panel.grid.major = element_blank(),
+          legend.position = "right",
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank()) + 
+  labs( x = "Week 14" ) + 
+  scale_fill_manual( values = mycolors ) + 
+  scale_x_discrete( labels = c( "NR", "R" )) 
+          # + theme( aspect.ratio = 2/1 )
+```
+
+``` r
+plot.compositions = (pdonorA + pdonorB + p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9) + plot_layout( nrow = 1 ) 
+plot.compositions
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Final%20plot-1.png)<!-- -->
+
+### Compostion per timepoint per patient
+
+``` r
+temp@otu_table %>% rownames()
+```
+
+    ##  [1] "Other"                          "Bacillotafam.incertaededis"    
+    ##  [3] "Bacteroidaceae"                 "Bacteroidalesfam.incertaesedis"
+    ##  [5] "Bifidobacteriaceae"             "Clostridiaceae"                
+    ##  [7] "Clostridialesfam.incertaesedis" "Coriobacteriaceae"             
+    ##  [9] "Eubacteriaceae"                 "Lachnospiraceae"               
+    ## [11] "Oscillospiraceae"               "Prevotellaceae"                
+    ## [13] "Rikenellaceae"                  "Ruminococcaceae"               
+    ## [15] "Sutterellaceae"                 "Veillonellaceae"
+
+``` r
+temp@tax_table[1,] <- "A_Other"
+taxa_names(temp) <- gsub(taxa_names(temp), pattern = "Other", replacement = "A_Other") 
+
+# Change names so the other category ends up in the bottom of the graph
+#rownames( temp@otu_table )[rownames( temp@otu_table ) == "Other"] <- "A_Other"
+#rownames( temp@tax_table )[rownames( temp@tax_table ) == "Other"] <- "A_Other"
+#temp = microbiome::merge_taxa2( temp, pattern = "Other", name = "A_Other" )
+# 
+#temp = merge_taxa2(temp, pattern = "Other", name = "A_Other")
+#taxa_names(temp)
+#temp@tax_table %>% rownames()
+
+# temp@otu_table %>% rownames()
+# temp@tax_table %>% rownames()
+# temp@tax_table
+
+temp
+```
+
+    ## phyloseq-class experiment-level object
+    ## otu_table()   OTU Table:         [ 16 taxa and 207 samples ]
+    ## sample_data() Sample Data:       [ 207 samples by 17 sample variables ]
+    ## tax_table()   Taxonomy Table:    [ 16 taxa by 2 taxonomic ranks ]
+
+``` r
+temp.donorA = temp %>%
+  ps_filter( subject_id == "Donor A", .keep_all_taxa = TRUE )
+
+temp.donorA@sam_data[[ "timepoint.new" ]] <- temp.donorA@sam_data[[ "timepoint.new" ]] %>% as.factor()
+temp.donorA@sam_data[[ "timepoint.new" ]] <- factor( temp.donorA@sam_data[[ "timepoint.new" ]], levels = c( "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"  ))
+
+temp.donorB = temp %>%
+  ps_filter( subject_id == "Donor B", .keep_all_taxa = TRUE )
+
+temp.donorB@sam_data[[ "timepoint.new" ]] <- temp.donorB@sam_data[[ "timepoint.new" ]] %>% as.factor()
+temp.donorB@sam_data[[ "timepoint.new" ]] <- factor( temp.donorB@sam_data[[ "timepoint.new" ]], levels = c( "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"  ))
+
+temp.101 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "101", .keep_all_taxa = TRUE )
+
+temp.101@sam_data[["timepoint.new"]] <- factor( temp.101@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.102 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "102", .keep_all_taxa = TRUE ) 
+
+temp.102@sam_data[["timepoint.new"]] <- factor( temp.102@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.103 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "103", .keep_all_taxa = TRUE ) 
+
+temp.103@sam_data[["timepoint.new"]] <- factor( temp.103@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.104 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "104", .keep_all_taxa = TRUE )
+
+temp.104@sam_data[["timepoint.new"]] <- factor( temp.104@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.105 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "105", .keep_all_taxa = TRUE )
+
+temp.105@sam_data[["timepoint.new"]] <- factor( temp.105@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.106 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "106", .keep_all_taxa = TRUE )
+
+temp.106@sam_data[["timepoint.new"]] <- factor( temp.106@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.107 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "107", .keep_all_taxa = TRUE )
+
+temp.107@sam_data[["timepoint.new"]] <- factor( temp.107@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.108 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "108", .keep_all_taxa = TRUE )
+
+temp.108@sam_data[["timepoint.new"]] <- factor( temp.108@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.109 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "109", .keep_all_taxa = TRUE ) 
+
+temp.109@sam_data[["timepoint.new"]] <- factor( temp.109@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.110 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "110", .keep_all_taxa = TRUE ) 
+
+temp.110@sam_data[["timepoint.new"]] <- factor( temp.110@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.111 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "111", .keep_all_taxa = TRUE )
+
+temp.111@sam_data[["timepoint.new"]] <- factor( temp.111@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.112 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "112", .keep_all_taxa = TRUE )
+
+temp.112@sam_data[["timepoint.new"]] <- factor( temp.112@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.113 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "113", .keep_all_taxa = TRUE )
+
+temp.113@sam_data[["timepoint.new"]] <- factor( temp.113@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.114 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "114", .keep_all_taxa = TRUE )
+
+temp.114@sam_data[["timepoint.new"]] <- factor( temp.114@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.115 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "115", .keep_all_taxa = TRUE )
+
+temp.115@sam_data[["timepoint.new"]] <- factor( temp.115@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.117 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "117", .keep_all_taxa = TRUE )
+
+temp.117@sam_data[["timepoint.new"]] <- factor( temp.117@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.118 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "118", .keep_all_taxa = TRUE )
+
+temp.118@sam_data[["timepoint.new"]] <- factor( temp.118@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.119 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "119", .keep_all_taxa = TRUE ) 
+
+temp.119@sam_data[["timepoint.new"]] <- factor( temp.119@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.120 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "120", .keep_all_taxa = TRUE ) 
+
+temp.120@sam_data[["timepoint.new"]] <- factor( temp.120@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.121 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "121", .keep_all_taxa = TRUE )
+
+temp.121@sam_data[["timepoint.new"]] <- factor( temp.121@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.122 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "122", .keep_all_taxa = TRUE )
+
+temp.122@sam_data[["timepoint.new"]] <- factor( temp.122@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.123 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "123", .keep_all_taxa = TRUE )
+
+temp.123@sam_data[["timepoint.new"]] <- factor( temp.123@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.124 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "124", .keep_all_taxa = TRUE )
+
+temp.124@sam_data[["timepoint.new"]] <- factor( temp.124@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+
+temp.125 = temp %>%
+  ps_select( subject_id, clinical_outcome_wk14, timepoint.new ) %>%
+  ps_filter( subject_id == "125", .keep_all_taxa = TRUE )
+
+temp.125@sam_data[["timepoint.new"]] <- factor( temp.125@sam_data[["timepoint.new"]],
+                                               levels = c("Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14"))
+```
+
+``` r
+# here we use plot_bar because we want to show samples that are not available
+# Reorder the levels of the "family" variable
+pdonorA = plot_bar( temp.donorA, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none", axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        panel.grid.major = element_blank(),
+        axis.title.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Donor A" ) 
+
+pdonorB = plot_bar( temp.donorB, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 0, hjust = 0.6 ),
+        legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Donor B" ) 
+
+p101 = plot_bar( temp.101, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 101" ) 
+
+p102 = plot_bar( temp.102, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 102" ) 
+
+p103 = plot_bar( temp.103, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE )+ 
+  ggtitle( "Patient 103" ) 
+
+p104 = plot_bar( temp.104, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 104" )  
+
+p105 = plot_bar( temp.105, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 105" ) 
+
+p106 = plot_bar( temp.106, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE )+ 
+  ggtitle( "Patient 106" ) 
+ 
+p107 = plot_bar( temp.107, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 107" )  
+
+p108 = plot_bar( temp.108, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 108" ) 
+
+p109 = plot_bar( temp.109, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 109" ) 
+
+p110 = plot_bar( temp.110, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.title = element_blank(),  
+        legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 110" ) 
+
+p111 = plot_bar( temp.111, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 111" ) 
+
+p112 = plot_bar( temp.112, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 112" ) 
+
+p113 = plot_bar( temp.113, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 113" ) 
+
+p114 = plot_bar( temp.114, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.title = element_blank(),  
+        legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 114" ) 
+
+p115 = plot_bar( temp.115, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 115" ) 
+
+p117 = plot_bar( temp.117, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 117" ) 
+
+p118 = plot_bar( temp.118, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.title = element_blank(),  
+        legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 118" ) 
+
+p119 = plot_bar( temp.119, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 119" ) 
+
+p120 = plot_bar( temp.120, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 120" ) 
+
+p121 = plot_bar( temp.121, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
+        legend.title = element_blank(),  
+        legend.position = "none",
+        axis.title.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE )+ 
+  ggtitle( "Patient 121" ) 
+
+p122 = plot_bar( temp.122, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
+        legend.title = element_blank(),  
+        legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 122" ) 
+
+p123 = plot_bar( temp.123, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank() ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 123" ) 
+
+p124 = plot_bar( temp.124, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
+        legend.title = element_blank(),  
+        legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()  ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 124" ) 
+
+p125 = plot_bar( temp.125, "timepoint.new", fill = "family" ) +
+  theme_bw() +
+  theme( text = element_text(size = 20),
+         axis.text.x = element_text( angle = 45, hjust = 1 ),
+        legend.position = "right",
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()  ) + 
+  labs( x = "Timepoint", y = "Relative Abundance" ) + 
+  scale_fill_manual( values = mycolors ) +  
+  scale_x_discrete( drop = FALSE ) + 
+  ggtitle( "Patient 125" ) 
+```
+
+``` r
+# plot.compositions = (( pdonorA | pdonorB )  / ( p101 | p102 | p103 | p104 ) / ( p105 | p106 | p107 | p108 ) / ( p109 | p110 | p111 | p112 ) / ( p113 | p114 | p115 | p117 ) / ( p118 | p119 | p120 | p121 ) / ( p122 | p123 | p124 | p125 )) + plot_layout( guides = 'collect' )
+
+# plot.compositions = (( pdonorA + labs( tag = 'A' ) | pdonorB + labs( tag = 'B' ))  / ( p101 + labs( tag = 'C' ) | p105 + labs( tag = 'D' ) | p102 + labs( tag = 'E' ) | p103 + labs( tag = 'F' ) ) / ( p108 + labs( tag = 'G' ) | p109 + labs( tag = 'H' ) | p104 + labs( tag = 'I' ) | p106 + labs( tag = 'J' )) / ( p110 + labs( tag = 'K' ) | p111 + labs( tag = 'L' ) | p107 + labs( tag = 'M' ) | p112 + labs( tag = 'N' ) ) / ( p114 + labs( tag = 'O' ) | p117 + labs( tag = 'P' ) | p113 + labs( tag = 'Q' ) | p115 + labs( tag = 'R' ) ) / ( p118 + labs( tag = 'S' ) | p119 + labs( tag = 'T' ) | p120 + labs( tag = 'U' ) | p123 + labs( tag = 'V' ) ) / ( p121 + labs( tag = 'W' ) | p122 + labs( tag = 'X' ) | p124 + labs( tag = 'Y' ) | p125 + labs( tag = 'Z' ) )) + plot_layout( guides = 'collect' )
+
+plot.compositions = (( pdonorA | pdonorB )  / ( p101 | p105 | p102 | p103 ) / ( p108 | p109 | p104 | p106 ) / ( p110 | p111 | p107 | p112 ) / ( p114 | p117 | p113 | p115 ) / ( p118 | p119 | p120 | p123 ) / ( p121 | p122 | p124 | p125 )) + plot_layout( guides = 'collect' )
+
+grid.arrange( patchworkGrob( plot.compositions ), left = textGrob( "Relative abundances", gp = gpar( fontsize = 20 ), rot = 90 ) )
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Final%20plot%20comp-1.png)<!-- -->
+
+## Relative abundances of top 15 species over time
+
+``` r
+# Sample data
+sample.data = as.data.frame( as.matrix( temp@sam_data ))
+sample.data$timepoint.new = as.factor( sample.data$timepoint.new )
+sample.data$timepoint.new = factor( sample.data$timepoint.new, levels = c( "Baseline", "Pre-FMT" , "Post-1", "Post-2", "Post-3", "Post-4", "Week8", "Week10", "Week14" ))
+sample.data$timepoint.new.num = as.numeric( sample.data$timepoint.new )
+sample.data$clinical_outcome_wk14 = as.factor( sample.data$clinical_outcome_wk14 )
+sample.data$clinical_outcome_wk14 = factor( sample.data$clinical_outcome_wk14, levels = c( "None", "Good" ))
+
+# Abundance data
+abund = as.data.frame( as.matrix( t( temp@otu_table )))
+
+# Combine
+df = data.frame( abund, sample.data )
+colnames( df )
+```
+
+    ##  [1] "A_Other"                        "Bacillotafam.incertaededis"    
+    ##  [3] "Bacteroidaceae"                 "Bacteroidalesfam.incertaesedis"
+    ##  [5] "Bifidobacteriaceae"             "Clostridiaceae"                
+    ##  [7] "Clostridialesfam.incertaesedis" "Coriobacteriaceae"             
+    ##  [9] "Eubacteriaceae"                 "Lachnospiraceae"               
+    ## [11] "Oscillospiraceae"               "Prevotellaceae"                
+    ## [13] "Rikenellaceae"                  "Ruminococcaceae"               
+    ## [15] "Sutterellaceae"                 "Veillonellaceae"               
+    ## [17] "subject_id"                     "filename"                      
+    ## [19] "file_id"                        "timepoint"                     
+    ## [21] "timepoint.new"                  "sample_id.new"                 
+    ## [23] "days_offset"                    "treated_with_donor"            
+    ## [25] "age"                            "sex"                           
+    ## [27] "pretreatment"                   "clinical_outcome_wk10"         
+    ## [29] "clinical_outcome_wk14"          "raw_reads"                     
+    ## [31] "human_reads"                    "human_percentage"              
+    ## [33] "high_quality_reads"             "timepoint.new.num"
+
+``` r
+# None responders
+df.none = subset( df, clinical_outcome_wk14 == "None" ) # changed filter to subset
+
+# Good responders
+df.good = subset( df, clinical_outcome_wk14 == "Good" )
+```
+
+## Plot Bacteroidaceae
+
+``` r
+a = xyplot( Bacteroidaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bacteroidaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bacteroidaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bacteroidaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bacteroidaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Bacteroidaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bacteroidaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Bacteroidaceae-1.png)<!-- -->
+
+## Plot Bacteroidalesfam.incertaesedis
+
+``` r
+a = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bacteroidalesfam.incertaesedis", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bacteroidalesfam.incertaesedis ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Bacteroidalesfam.incertaesedis.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bacteroidalesfam.incertaesedis.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Bacteroidalesfam.incertaesedis-1.png)<!-- -->
+
+## Plot Bifidobacteriaceae
+
+``` r
+a = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bifidobacteriaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bifidobacteriaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Bifidobacteriaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bifidobacteriaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Bifidobacteriaceae-1.png)<!-- -->
+
+## Plot Clostridiaceae
+
+``` r
+a = xyplot( Clostridiaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Clostridiaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Clostridiaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Clostridiaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Clostridiaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Clostridiaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Clostridiaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Clostridiaceae-1.png)<!-- -->
+
+## Plot Clostridialesfam.incertaesedis
+
+``` r
+a = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Clostridialesfam.incertaesedis", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Clostridialesfam.incertaesedis ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Clostridialesfam.incertaesedis.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Clostridialesfam.incertaesedis.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Clostridialesfam.incertaesedis-1.png)<!-- -->
+
+## Plot Coriobacteriaceae
+
+``` r
+a = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Coriobacteriaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Coriobacteriaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Coriobacteriaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Coriobacteriaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Coriobacteriaceae-1.png)<!-- -->
+
+## Plot Eubacteriaceae
+
+``` r
+a = xyplot( Eubacteriaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Eubacteriaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Eubacteriaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Eubacteriaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Eubacteriaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Eubacteriaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Eubacteriaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Eubacteriaceae-1.png)<!-- -->
+
+## Plot Bacillotafam.incertaededis
+
+``` r
+a = xyplot( Bacillotafam.incertaededis ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Bacillotafam.incertaededis", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Bacillotafam.incertaededis ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Bacillotafam.incertaededis ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Bacillotafam.incertaededis ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Bacillotafam.incertaededis.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Bacillotafam.incertaededis.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Bacillotafam.incertaededis-1.png)<!-- -->
+
+## Plot Lachnospiraceae
+
+``` r
+a = xyplot( Lachnospiraceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Lachnospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Lachnospiraceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Lachnospiraceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Lachnospiraceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Lachnospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Lachnospiraceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Lachnospiraceae-1.png)<!-- -->
+
+## Plot Oscillospiraceae
+
+``` r
+a = xyplot( Oscillospiraceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Oscillospiraceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Oscillospiraceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Oscillospiraceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Oscillospiraceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Oscillospiraceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Oscillospiraceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Oscillospiraceae-1.png)<!-- -->
+
+## Plot Prevotellaceae
+
+``` r
+a = xyplot( Prevotellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Prevotellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Prevotellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Prevotellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Prevotellaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Prevotellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Prevotellaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Prevotellaceae-1.png)<!-- -->
+
+## Plot Rikenellaceae
+
+``` r
+a = xyplot( Rikenellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Rikenellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Rikenellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Rikenellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Rikenellaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Rikenellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Rikenellaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Rikenellaceae-1.png)<!-- -->
+
+## Plot Ruminococcaceae
+
+``` r
+a = xyplot( Ruminococcaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Ruminococcaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Ruminococcaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Ruminococcaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Ruminococcaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Ruminococcaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Ruminococcaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Ruminococcaceae-1.png)<!-- -->
+
+## Plot Sutterellaceae
+
+``` r
+a = xyplot( Sutterellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Sutterellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Sutterellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Sutterellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Sutterellaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Sutterellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Sutterellaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Sutterellaceae-1.png)<!-- -->
+
+## Plot Veillonellaceae
+
+``` r
+a = xyplot( Veillonellaceae ~ timepoint.new, data = df.none, xlab = "Timepoint", ylab = "Relative abundance", main="Veillonellaceae", 
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#EC7063", lwd = 4 )
+           },
+           key = list( space = "none", 
+                      lines = list( col = c( "#EC7063", "#85C1E9" ), lty = c( 1, 1 ), lwd = 2 ), 
+                      text = list( c( "Non-Responders", "Responders" ))))
+
+b = xyplot( Veillonellaceae ~ timepoint.new, data = df.good, xlab = "Timepoint",
+           panel = function( x, y ) {
+             panel.average( x, y, horizontal = FALSE, col = "#85C1E9", lwd = 4, type = "l", lty = 1 )
+           })
+
+c = xyplot( Veillonellaceae ~ timepoint.new, data = df.none, type = "p", col = "#EC7063" )
+
+d = xyplot( Veillonellaceae ~ timepoint.new, data = df.good, type = "p", col = "#85C1E9" )
+
+Veillonellaceae.plot = a + as.layer( b ) + as.layer( c ) + as.layer( d )
+Veillonellaceae.plot
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Plot%20Veillonellaceae-1.png)<!-- -->
+
+``` r
+grid.arrange( Bacteroidaceae.plot, Bacteroidalesfam.incertaesedis.plot, Bifidobacteriaceae.plot, Clostridiaceae.plot, Clostridialesfam.incertaesedis.plot, Coriobacteriaceae.plot, Eubacteriaceae.plot , Bacillotafam.incertaededis.plot, Lachnospiraceae.plot, Oscillospiraceae.plot, Prevotellaceae.plot, Rikenellaceae.plot, Ruminococcaceae.plot, Sutterellaceae.plot, Veillonellaceae.plot, ncol = 4) 
+```
+
+![](1-Microbiota-composition-and-relative-abundances-over-time_files/figure-gfm/Final%20plot%20abuns-1.png)<!-- -->
