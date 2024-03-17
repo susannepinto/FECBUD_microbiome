@@ -1,6 +1,7 @@
 Top 10 families Mixed models
 ================
-March 2024
+S. Pinto and D. Sajbenova
+(March 2024)
 
 ## Load required packages
 
