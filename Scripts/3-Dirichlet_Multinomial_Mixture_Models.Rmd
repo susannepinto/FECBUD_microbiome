@@ -451,25 +451,26 @@ physeq_mOTU@sam_data$cluster = as.factor( physeq_mOTU@sam_data$cluster )
 physeq_mOTU@sam_data$type = c( rep( "Subject", 180 ), rep( "Donor A", 13 ), rep( "Donor B", 14 ))
 physeq_mOTU@sam_data$type = as.factor( physeq_mOTU@sam_data$type )
 
+# Create a new variable type_outcome based on Subject Good, None, and Donor A/B
+physeq_mOTU@sam_data$type_outcome <-physeq_mOTU@sam_data$type 
+physeq_mOTU@sam_data$type_outcome <- ifelse(physeq_mOTU@sam_data$type == "Subject" & physeq_mOTU@sam_data$clinical_outcome_wk14 == "Good", "Subject_Good",ifelse(physeq_mOTU@sam_data$type == "Subject" & physeq_mOTU@sam_data$clinical_outcome_wk14 == "None", "Subject_None", physeq_mOTU@sam_data$type))
+# Replace numerical values with "Donor A" and "Donor B"
+physeq_mOTU@sam_data$type_outcome[physeq_mOTU@sam_data$type_outcome == 1] <- "Donor A"
+physeq_mOTU@sam_data$type_outcome[physeq_mOTU@sam_data$type_outcome == 2] <- "Donor B"
+physeq_mOTU@sam_data$type_outcome <- as.factor(physeq_mOTU@sam_data$type_outcome)
+
 pca.1.3 = physeq_mOTU %>% tax_transform( "clr", rank = "unique" ) %>% # best graph
   ord_calc( method = "PCA" ) %>%
   ord_plot(
     axes = c( 1, 2 ), 
-    color = "cluster", fill = "cluster", shape = "type", plot_taxa = c( "Prevotellaceae", "Ruminococcaceae", "Lachnospiraceae", "Clostridialesfam.incertaesedis" ), size = 3
-  ) + scale_color_manual(values = c(  "#934864", "#658E67", "#F3E831", "#FF980A", "#E41A1C" )) +
-  # scale_shape_manual( values = c(
-    # Baseline = "circle", FMT1 = "circle cross", FMT2 = "circle open", FMT3 = "square", FMT4 = "square cross", Week7 = "square open",
-    # Week8 = "triangle", Week10 = "triangle open", Week14 = "diamond" )) +
-  # ggplot2::stat_ellipse(
-    # ggplot2::aes( colour = clinical_outcome_wk14 )
-  # ) +
-  ggtitle( # title
-    label = "PCA Based on Aitchison Distance",
-  ) +
-  #labs( caption = "180 samples, 93 taxa" ) + # caption at bottom
-    theme( text = element_text( size = 20 )) +
+    color = "cluster", fill = "cluster", shape = "type_outcome", plot_taxa = c( "Prevotellaceae", "Ruminococcaceae", "Lachnospiraceae", "Clostridialesfam.incertaesedis" ), size = 3
+  ) + 
+  scale_color_manual(values = c("#934864", "#658E67", "#F3E831", "#FF980A", "#E41A1C")) +
+  scale_shape_manual(values = c(2, 17, 19, 1)) + # Assigning point types8, 1, 19
+  ggtitle(label = "PCA Based on Aitchison Distance") +
+  theme(text = element_text(size = 20)) +
   ggplot2::stat_ellipse(
-    ggplot2::aes( colour = cluster )
+    ggplot2::aes(colour = cluster)
   ) +
   theme_bw()
 
